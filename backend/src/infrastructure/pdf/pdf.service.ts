@@ -8,6 +8,11 @@ export class PdfService {
 
   constructor(private readonly configService: ConfigService) {}
 
+  async verifyAvailability(): Promise<void> {
+    const browser = await this.launchBrowser();
+    await browser.close();
+  }
+
   /**
    * Render an HTML string to a PDF buffer.
    * Uses Puppeteer headless Chromium for high-fidelity rendering.
@@ -16,13 +21,10 @@ export class PdfService {
     let browser: Browser | null = null;
 
     try {
-      const executablePath = this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH') || undefined;
+      const executablePath =
+        this.configService.get<string>('PUPPETEER_EXECUTABLE_PATH') || undefined;
 
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
-        ...(executablePath ? { executablePath } : {}),
-      });
+      browser = await this.launchBrowser(executablePath);
 
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -48,5 +50,13 @@ export class PdfService {
         await browser.close();
       }
     }
+  }
+
+  private launchBrowser(executablePath?: string): Promise<Browser> {
+    return puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+      ...(executablePath ? { executablePath } : {}),
+    });
   }
 }

@@ -20,9 +20,6 @@ Thumbs.db
 # Coverage
 coverage/
 
-# Prisma
-prisma/migrations/**/migration_lock.toml
-
 # Logs
 logs/
 *.log

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
@@ -11,6 +11,9 @@ import { StorageModule } from '@infra/storage/storage.module';
 import { MailModule } from '@infra/mail/mail.module';
 import { PdfModule } from '@infra/pdf/pdf.module';
 import { QueueModule } from '@infra/queue/queue.module';
+import { AntivirusModule } from '@infra/antivirus/antivirus.module';
+import { HealthModule } from '@infra/health/health.module';
+import { validateEnvironment } from './config/environment';
 
 // Domain Modules (will be registered as development progresses)
 // import { AuthModule } from '@modules/auth/auth.module';
@@ -30,6 +33,8 @@ import { QueueModule } from '@infra/queue/queue.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      cache: true,
+      validate: validateEnvironment,
     }),
 
     // ====== Event System ======
@@ -39,12 +44,15 @@ import { QueueModule } from '@infra/queue/queue.module';
     ScheduleModule.forRoot(),
 
     // ====== BullMQ Background Processing ======
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        password: process.env.REDIS_PASSWORD || undefined,
-      },
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.getOrThrow<string>('REDIS_HOST'),
+          port: Number(configService.getOrThrow<string>('REDIS_PORT')),
+          password: configService.get<string>('REDIS_PASSWORD') || undefined,
+        },
+      }),
     }),
 
     // ====== Infrastructure Modules ======
@@ -54,6 +62,8 @@ import { QueueModule } from '@infra/queue/queue.module';
     MailModule,
     PdfModule,
     QueueModule,
+    AntivirusModule,
+    HealthModule,
 
     // ====== Domain Modules (uncomment as they are built) ======
     // AuthModule,

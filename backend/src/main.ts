@@ -1,48 +1,37 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from '@common/exceptions';
 import { ResponseInterceptor } from '@common/interceptors';
+import { AppModule } from './app.module';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
-  // ====== Security Headers ======
   app.use(helmet());
-
-  // ====== CORS ======
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: configService.get<string>('CORS_ORIGIN', 'http://localhost:3001'),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 
-  // ====== Global API Prefix ======
-  const apiPrefix = process.env.API_PREFIX || 'api/v1';
+  const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
   app.setGlobalPrefix(apiPrefix);
-
-  // ====== Global Exception Filter ======
   app.useGlobalFilters(new GlobalExceptionFilter());
-
-  // ====== Global Response Interceptor ======
   app.useGlobalInterceptors(new ResponseInterceptor());
-
-  // ====== Global Validation Pipe ======
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
-  // ====== Swagger API Documentation ======
   const swaggerConfig = new DocumentBuilder()
     .setTitle('VendorBridge ERP API')
     .setDescription('Backend API for VendorBridge Procurement & Vendor Management ERP')
@@ -58,6 +47,7 @@ async function bootstrap() {
       },
       'JWT-auth',
     )
+    .addTag('Health', 'Infrastructure readiness')
     .addTag('Auth', 'Authentication & Identity Management')
     .addTag('Dashboard', 'Dashboard Metrics & Quick Actions')
     .addTag('Vendors', 'Vendor Management Lifecycle')
@@ -74,11 +64,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
-  // ====== Start Server ======
-  const port = process.env.PORT || 3000;
+  const port = Number(configService.get<string>('PORT', '3000'));
   await app.listen(port);
-  logger.log(`🚀 VendorBridge API running on: http://localhost:${port}/${apiPrefix}`);
-  logger.log(`📄 Swagger docs available at: http://localhost:${port}/docs`);
+  logger.log(`VendorBridge API running on: http://localhost:${port}/${apiPrefix}`);
+  logger.log(`Swagger docs available at: http://localhost:${port}/docs`);
 }
 
-bootstrap();
+void bootstrap();

@@ -13,7 +13,7 @@ COPY prisma ./prisma/
 
 RUN npm ci
 COPY . .
-RUN npx prisma generate
+RUN npm run prisma:generate
 RUN npm run build
 
 # --- Stage 2: Production ---
@@ -31,7 +31,7 @@ RUN apk add --no-cache \
       openssl
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     NODE_ENV=production
 
 COPY --from=builder /app/package*.json ./
@@ -45,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:3000/api/v1/health || exit 1
 
 # Run migrations and start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+CMD ["sh", "-c", "npm run prisma:migrate:deploy && node dist/main.js"]

@@ -36,7 +36,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message = (resp.message as string | string[]) || exception.message;
         error = (resp.error as string) || exception.name;
       }
-    } else if (exception instanceof Error) {
+    } else if (exception instanceof Error && process.env.NODE_ENV !== 'production') {
       message = exception.message;
       error = exception.name;
     }

@@ -1,11 +1,11 @@
 // =============================================================
 // VendorBridge ERP - Prisma Schema Definition
-// All 14 core tables, enums, indexes, and relationships
+// All 18 core tables, enums, indexes, and relationships
 // =============================================================
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -88,18 +88,19 @@ model User {
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  sessions         UserSession[]
-  passwordResets   PasswordReset[]
-  createdRfqs      Rfq[]            @relation("RfqCreator")
-  actionedSteps    ApprovalStep[]   @relation("StepActionedBy")
-  assignedSteps    ApprovalStep[]   @relation("StepAssignedUser")
-  purchaseOrders   PurchaseOrder[]  @relation("PoCreator")
-  auditLogs        AuditLog[]       @relation("LogActor")
-  notifications    Notification[]
+  sessions       UserSession[]
+  passwordResets PasswordReset[]
+  createdRfqs    Rfq[]           @relation("RfqCreator")
+  actionedSteps  ApprovalStep[]  @relation("StepActionedBy")
+  assignedSteps  ApprovalStep[]  @relation("StepAssignedUser")
+  purchaseOrders PurchaseOrder[] @relation("PoCreator")
+  auditLogs      AuditLog[]      @relation("LogActor")
+  notifications  Notification[]
 
-  @@map("users")
   @@index([email])
+  @@index([role])
   @@index([role, status])
+  @@map("users")
 }
 
 model UserSession {
@@ -112,8 +113,8 @@ model UserSession {
   expiresAt        DateTime @map("expires_at") @db.Timestamptz
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@map("user_sessions")
   @@index([userId])
+  @@map("user_sessions")
 }
 
 model PasswordReset {
@@ -124,8 +125,8 @@ model PasswordReset {
   expiresAt      DateTime @map("expires_at") @db.Timestamptz
   isUsed         Boolean  @default(false) @map("is_used")
 
-  @@map("password_resets")
   @@index([userId])
+  @@map("password_resets")
 }
 
 // ==================== VENDORS ====================
@@ -142,16 +143,16 @@ model Vendor {
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  contacts    VendorContact[]
-  rfqInvites  RfqVendorAssignment[]
-  quotations  VendorQuotation[]
-  pos         PurchaseOrder[]
-  invoices    Invoice[]
+  contacts   VendorContact[]
+  rfqInvites RfqVendorAssignment[]
+  quotations VendorQuotation[]
+  pos        PurchaseOrder[]
+  invoices   Invoice[]
 
-  @@map("vendors")
   @@index([status])
   @@index([category])
   @@index([status, category])
+  @@map("vendors")
 }
 
 model VendorContact {
@@ -164,8 +165,8 @@ model VendorContact {
   phone     String  @db.VarChar(20)
   isPrimary Boolean @default(true) @map("is_primary")
 
-  @@map("vendor_contacts")
   @@index([vendorId])
+  @@map("vendor_contacts")
 }
 
 // ==================== RFQs ====================
@@ -188,11 +189,11 @@ model Rfq {
   assignments RfqVendorAssignment[]
   quotations  VendorQuotation[]
 
-  @@map("rfqs")
   @@index([status])
   @@index([deadline])
   @@index([status, deadline])
   @@index([createdBy])
+  @@map("rfqs")
 }
 
 model RfqItem {
@@ -207,8 +208,8 @@ model RfqItem {
   // Relations
   quotationItems QuotationItem[]
 
-  @@map("rfq_items")
   @@index([rfqId])
+  @@map("rfq_items")
 }
 
 model RfqVendorAssignment {
@@ -230,8 +231,8 @@ model RfqAttachment {
   fileSizeBytes BigInt   @map("file_size_bytes")
   uploadedAt    DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
 
-  @@map("rfq_attachments")
   @@index([rfqId])
+  @@map("rfq_attachments")
 }
 
 // ==================== QUOTATIONS ====================
@@ -251,14 +252,14 @@ model VendorQuotation {
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
-  items       QuotationItem[]
-  attachments QuotationAttachment[]
+  items         QuotationItem[]
+  attachments   QuotationAttachment[]
   purchaseOrder PurchaseOrder?
 
-  @@map("vendor_quotations")
   @@unique([rfqId, vendorId])
   @@index([rfqId, status])
   @@index([vendorId])
+  @@map("vendor_quotations")
 }
 
 model QuotationItem {
@@ -271,8 +272,8 @@ model QuotationItem {
   taxPercentage  Decimal         @default(0.00) @map("tax_percentage") @db.Decimal(5, 2)
   totalItemPrice Decimal         @map("total_item_price") @db.Decimal(14, 2)
 
-  @@map("quotation_items")
   @@index([quotationId])
+  @@map("quotation_items")
 }
 
 model QuotationAttachment {
@@ -283,8 +284,8 @@ model QuotationAttachment {
   fileUrl     String          @map("file_url") @db.VarChar(512)
   uploadedAt  DateTime        @default(now()) @map("uploaded_at") @db.Timestamptz
 
-  @@map("quotation_attachments")
   @@index([quotationId])
+  @@map("quotation_attachments")
 }
 
 // ==================== APPROVALS ====================
@@ -301,9 +302,9 @@ model ApprovalWorkflow {
   // Relations
   steps ApprovalStep[]
 
-  @@map("approval_workflows")
   @@index([entityType, entityId])
   @@index([status])
+  @@map("approval_workflows")
 }
 
 model ApprovalStep {
@@ -320,9 +321,9 @@ model ApprovalStep {
   actor          User?            @relation("StepActionedBy", fields: [actionedBy], references: [id])
   actionedAt     DateTime?        @map("actioned_at") @db.Timestamptz
 
-  @@map("approval_steps")
   @@index([workflowId])
   @@index([assignedRole, status])
+  @@map("approval_steps")
 }
 
 // ==================== PURCHASE ORDERS ====================
@@ -347,9 +348,9 @@ model PurchaseOrder {
   // Relations
   invoices Invoice[]
 
-  @@map("purchase_orders")
   @@index([status])
   @@index([vendorId])
+  @@map("purchase_orders")
 }
 
 // ==================== INVOICES ====================
@@ -371,10 +372,10 @@ model Invoice {
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@map("invoices")
   @@index([status])
   @@index([vendorId])
   @@index([purchaseOrderId])
+  @@map("invoices")
 }
 
 // ==================== NOTIFICATIONS ====================
@@ -389,9 +390,9 @@ model Notification {
   isRead      Boolean  @default(false) @map("is_read")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@map("notifications")
   @@index([recipientId, isRead])
   @@index([recipientId, createdAt])
+  @@map("notifications")
 }
 
 // ==================== AUDIT LOGS ====================
@@ -408,9 +409,9 @@ model AuditLog {
   userAgent  String?  @map("user_agent") @db.VarChar(512)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@map("audit_logs")
   @@index([actorId])
   @@index([entityType, entityId])
   @@index([action])
   @@index([createdAt])
+  @@map("audit_logs")
 }

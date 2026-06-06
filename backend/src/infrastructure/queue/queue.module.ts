@@ -5,6 +5,13 @@ import { BullModule } from '@nestjs/bullmq';
 export const QUEUE_EMAIL_NOTIFICATIONS = 'email-notifications';
 export const QUEUE_PDF_GENERATION = 'pdf-generation';
 export const QUEUE_REPORT_EXPORT = 'report-export';
+export const DEFAULT_QUEUE_JOB_OPTIONS = {
+  attempts: 3,
+  backoff: {
+    type: 'exponential' as const,
+    delay: 2000,
+  },
+};
 
 @Global()
 @Module({
@@ -13,11 +20,7 @@ export const QUEUE_REPORT_EXPORT = 'report-export';
       {
         name: QUEUE_EMAIL_NOTIFICATIONS,
         defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 2000,
-          },
+          ...DEFAULT_QUEUE_JOB_OPTIONS,
           removeOnComplete: 100,
           removeOnFail: 500,
         },
@@ -25,11 +28,7 @@ export const QUEUE_REPORT_EXPORT = 'report-export';
       {
         name: QUEUE_PDF_GENERATION,
         defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 3000,
-          },
+          ...DEFAULT_QUEUE_JOB_OPTIONS,
           removeOnComplete: 50,
           removeOnFail: 200,
         },
@@ -37,11 +36,7 @@ export const QUEUE_REPORT_EXPORT = 'report-export';
       {
         name: QUEUE_REPORT_EXPORT,
         defaultJobOptions: {
-          attempts: 2,
-          backoff: {
-            type: 'exponential',
-            delay: 5000,
-          },
+          ...DEFAULT_QUEUE_JOB_OPTIONS,
           removeOnComplete: 30,
           removeOnFail: 100,
         },

@@ -23,16 +23,19 @@ export class MailService {
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('MAIL_HOST', 'localhost'),
-      port: this.configService.get<number>('MAIL_PORT', 1025),
+      port: Number(this.configService.get<string>('MAIL_PORT', '1025')),
       secure: false,
-      auth:
-        this.configService.get<string>('MAIL_USER')
-          ? {
-              user: this.configService.get<string>('MAIL_USER'),
-              pass: this.configService.get<string>('MAIL_PASSWORD'),
-            }
-          : undefined,
+      auth: this.configService.get<string>('MAIL_USER')
+        ? {
+            user: this.configService.get<string>('MAIL_USER'),
+            pass: this.configService.get<string>('MAIL_PASSWORD'),
+          }
+        : undefined,
     });
+  }
+
+  async verifyConnection(): Promise<void> {
+    await this.transporter.verify();
   }
 
   /**

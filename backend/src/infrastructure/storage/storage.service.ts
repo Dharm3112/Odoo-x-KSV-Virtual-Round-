@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  HeadBucketCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -24,18 +25,15 @@ export class StorageService {
         accessKeyId: this.configService.get<string>('S3_ACCESS_KEY', 'minio_admin'),
         secretAccessKey: this.configService.get<string>('S3_SECRET_KEY', 'minio_password'),
       },
-      forcePathStyle: this.configService.get<boolean>('S3_FORCE_PATH_STYLE', true),
+      forcePathStyle:
+        this.configService.get<string>('S3_FORCE_PATH_STYLE', 'true').toLowerCase() === 'true',
     });
   }
 
   /**
    * Upload a file buffer to S3/MinIO storage.
    */
-  async uploadFile(
-    key: string,
-    body: Buffer,
-    contentType: string,
-  ): Promise<string> {
+  async uploadFile(key: string, body: Buffer, contentType: string): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
@@ -47,6 +45,10 @@ export class StorageService {
     this.logger.log(`File uploaded successfully: ${key}`);
 
     return key;
+  }
+
+  async verifyConnection(): Promise<void> {
+    await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucketName }));
   }
 
   /**
