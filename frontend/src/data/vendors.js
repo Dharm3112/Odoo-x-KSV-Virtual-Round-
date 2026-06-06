@@ -22,3 +22,4 @@ const VENDORS = [
 ];
 
 export default VENDORS;
+export const vendors = VENDORS;
