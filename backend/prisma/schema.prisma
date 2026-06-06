@@ -1,0 +1,416 @@
+// =============================================================
+// VendorBridge ERP - Prisma Schema Definition
+// All 14 core tables, enums, indexes, and relationships
+// =============================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  admin
+  procurement_officer
+  manager
+  vendor
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+enum VendorStatus {
+  pending
+  approved
+  rejected
+  blacklisted
+}
+
+enum RfqStatus {
+  draft
+  published
+  closed
+  cancelled
+}
+
+enum QuotationStatus {
+  draft
+  submitted
+  revised
+  retracted
+  accepted
+  rejected
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum PoStatus {
+  draft
+  pending_approval
+  approved
+  sent_to_vendor
+  delivered
+  cancelled
+}
+
+enum InvoiceStatus {
+  unpaid
+  paid
+  void
+  overdue
+}
+
+// ==================== AUTH & USERS ====================
+
+model User {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  firstName    String     @map("first_name") @db.VarChar(100)
+  lastName     String     @map("last_name") @db.VarChar(100)
+  role         Role
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  sessions         UserSession[]
+  passwordResets   PasswordReset[]
+  createdRfqs      Rfq[]            @relation("RfqCreator")
+  actionedSteps    ApprovalStep[]   @relation("StepActionedBy")
+  assignedSteps    ApprovalStep[]   @relation("StepAssignedUser")
+  purchaseOrders   PurchaseOrder[]  @relation("PoCreator")
+  auditLogs        AuditLog[]       @relation("LogActor")
+  notifications    Notification[]
+
+  @@map("users")
+  @@index([email])
+  @@index([role, status])
+}
+
+model UserSession {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String   @unique @map("refresh_token_hash") @db.VarChar(255)
+  ipAddress        String   @map("ip_address") @db.VarChar(45)
+  userAgent        String?  @map("user_agent") @db.VarChar(512)
+  expiresAt        DateTime @map("expires_at") @db.Timestamptz
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("user_sessions")
+  @@index([userId])
+}
+
+model PasswordReset {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resetTokenHash String   @unique @map("reset_token_hash") @db.VarChar(255)
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz
+  isUsed         Boolean  @default(false) @map("is_used")
+
+  @@map("password_resets")
+  @@index([userId])
+}
+
+// ==================== VENDORS ====================
+
+model Vendor {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyName String       @unique @map("company_name") @db.VarChar(255)
+  gstNumber   String       @unique @map("gst_number") @db.VarChar(15)
+  status      VendorStatus @default(pending)
+  category    String       @db.VarChar(100)
+  rating      Decimal      @default(0.00) @db.Decimal(3, 2)
+  address     String       @db.Text
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  contacts    VendorContact[]
+  rfqInvites  RfqVendorAssignment[]
+  quotations  VendorQuotation[]
+  pos         PurchaseOrder[]
+  invoices    Invoice[]
+
+  @@map("vendors")
+  @@index([status])
+  @@index([category])
+  @@index([status, category])
+}
+
+model VendorContact {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vendorId  String  @map("vendor_id") @db.Uuid
+  vendor    Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  firstName String  @map("first_name") @db.VarChar(100)
+  lastName  String  @map("last_name") @db.VarChar(100)
+  email     String  @unique @db.VarChar(255)
+  phone     String  @db.VarChar(20)
+  isPrimary Boolean @default(true) @map("is_primary")
+
+  @@map("vendor_contacts")
+  @@index([vendorId])
+}
+
+// ==================== RFQs ====================
+
+model Rfq {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rfqCode     String    @unique @map("rfq_code") @db.VarChar(50)
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  deadline    DateTime  @db.Timestamptz
+  status      RfqStatus @default(draft)
+  createdBy   String    @map("created_by") @db.Uuid
+  creator     User      @relation("RfqCreator", fields: [createdBy], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  items       RfqItem[]
+  attachments RfqAttachment[]
+  assignments RfqVendorAssignment[]
+  quotations  VendorQuotation[]
+
+  @@map("rfqs")
+  @@index([status])
+  @@index([deadline])
+  @@index([status, deadline])
+  @@index([createdBy])
+}
+
+model RfqItem {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rfqId       String  @map("rfq_id") @db.Uuid
+  rfq         Rfq     @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  itemName    String  @map("item_name") @db.VarChar(255)
+  description String? @db.Text
+  quantity    Decimal @db.Decimal(12, 4)
+  uom         String  @db.VarChar(20)
+
+  // Relations
+  quotationItems QuotationItem[]
+
+  @@map("rfq_items")
+  @@index([rfqId])
+}
+
+model RfqVendorAssignment {
+  rfqId    String @map("rfq_id") @db.Uuid
+  rfq      Rfq    @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  vendorId String @map("vendor_id") @db.Uuid
+  vendor   Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@id([rfqId, vendorId])
+  @@map("rfq_vendor_assignments")
+}
+
+model RfqAttachment {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rfqId         String   @map("rfq_id") @db.Uuid
+  rfq           Rfq      @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  fileName      String   @map("file_name") @db.VarChar(255)
+  fileUrl       String   @map("file_url") @db.VarChar(512)
+  fileSizeBytes BigInt   @map("file_size_bytes")
+  uploadedAt    DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  @@map("rfq_attachments")
+  @@index([rfqId])
+}
+
+// ==================== QUOTATIONS ====================
+
+model VendorQuotation {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rfqId          String          @map("rfq_id") @db.Uuid
+  rfq            Rfq             @relation(fields: [rfqId], references: [id], onDelete: Restrict)
+  vendorId       String          @map("vendor_id") @db.Uuid
+  vendor         Vendor          @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  status         QuotationStatus @default(draft)
+  totalPrice     Decimal         @map("total_price") @db.Decimal(14, 2)
+  deliveryDate   DateTime        @map("delivery_date") @db.Date
+  revisionNumber Int             @default(0) @map("revision_number")
+  vendorNotes    String?         @map("vendor_notes") @db.Text
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  items       QuotationItem[]
+  attachments QuotationAttachment[]
+  purchaseOrder PurchaseOrder?
+
+  @@map("vendor_quotations")
+  @@unique([rfqId, vendorId])
+  @@index([rfqId, status])
+  @@index([vendorId])
+}
+
+model QuotationItem {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quotationId    String          @map("quotation_id") @db.Uuid
+  quotation      VendorQuotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  rfqItemId      String          @map("rfq_item_id") @db.Uuid
+  rfqItem        RfqItem         @relation(fields: [rfqItemId], references: [id], onDelete: Restrict)
+  unitPrice      Decimal         @map("unit_price") @db.Decimal(12, 2)
+  taxPercentage  Decimal         @default(0.00) @map("tax_percentage") @db.Decimal(5, 2)
+  totalItemPrice Decimal         @map("total_item_price") @db.Decimal(14, 2)
+
+  @@map("quotation_items")
+  @@index([quotationId])
+}
+
+model QuotationAttachment {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quotationId String          @map("quotation_id") @db.Uuid
+  quotation   VendorQuotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  fileName    String          @map("file_name") @db.VarChar(255)
+  fileUrl     String          @map("file_url") @db.VarChar(512)
+  uploadedAt  DateTime        @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  @@map("quotation_attachments")
+  @@index([quotationId])
+}
+
+// ==================== APPROVALS ====================
+
+model ApprovalWorkflow {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType  String         @map("entity_type") @db.VarChar(50)
+  entityId    String         @map("entity_id") @db.Uuid
+  status      ApprovalStatus @default(pending)
+  currentStep Int            @default(1) @map("current_step")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  steps ApprovalStep[]
+
+  @@map("approval_workflows")
+  @@index([entityType, entityId])
+  @@index([status])
+}
+
+model ApprovalStep {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workflowId     String           @map("workflow_id") @db.Uuid
+  workflow       ApprovalWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  stepNumber     Int              @map("step_number")
+  assignedRole   Role             @map("assigned_role")
+  assignedUserId String?          @map("assigned_user_id") @db.Uuid
+  assignedUser   User?            @relation("StepAssignedUser", fields: [assignedUserId], references: [id])
+  status         ApprovalStatus   @default(pending)
+  remarks        String?          @db.Text
+  actionedBy     String?          @map("actioned_by") @db.Uuid
+  actor          User?            @relation("StepActionedBy", fields: [actionedBy], references: [id])
+  actionedAt     DateTime?        @map("actioned_at") @db.Timestamptz
+
+  @@map("approval_steps")
+  @@index([workflowId])
+  @@index([assignedRole, status])
+}
+
+// ==================== PURCHASE ORDERS ====================
+
+model PurchaseOrder {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  poNumber    String          @unique @map("po_number") @db.VarChar(50)
+  quotationId String          @unique @map("quotation_id") @db.Uuid
+  quotation   VendorQuotation @relation(fields: [quotationId], references: [id], onDelete: Restrict)
+  vendorId    String          @map("vendor_id") @db.Uuid
+  vendor      Vendor          @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  status      PoStatus        @default(draft)
+  subtotal    Decimal         @db.Decimal(14, 2)
+  taxAmount   Decimal         @map("tax_amount") @db.Decimal(14, 2)
+  totalAmount Decimal         @map("total_amount") @db.Decimal(14, 2)
+  pdfUrl      String?         @map("pdf_url") @db.VarChar(512)
+  createdBy   String          @map("created_by") @db.Uuid
+  creator     User            @relation("PoCreator", fields: [createdBy], references: [id])
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  invoices Invoice[]
+
+  @@map("purchase_orders")
+  @@index([status])
+  @@index([vendorId])
+}
+
+// ==================== INVOICES ====================
+
+model Invoice {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceNumber   String        @unique @map("invoice_number") @db.VarChar(50)
+  purchaseOrderId String        @map("purchase_order_id") @db.Uuid
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
+  vendorId        String        @map("vendor_id") @db.Uuid
+  vendor          Vendor        @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  status          InvoiceStatus @default(unpaid)
+  subtotal        Decimal       @db.Decimal(14, 2)
+  taxAmount       Decimal       @map("tax_amount") @db.Decimal(14, 2)
+  totalAmount     Decimal       @map("total_amount") @db.Decimal(14, 2)
+  pdfUrl          String?       @map("pdf_url") @db.VarChar(512)
+  dueDate         DateTime      @map("due_date") @db.Date
+  paidAt          DateTime?     @map("paid_at") @db.Timestamptz
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("invoices")
+  @@index([status])
+  @@index([vendorId])
+  @@index([purchaseOrderId])
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientId String   @map("recipient_id") @db.Uuid
+  user        User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  title       String   @db.VarChar(255)
+  message     String   @db.Text
+  type        String   @db.VarChar(50)
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("notifications")
+  @@index([recipientId, isRead])
+  @@index([recipientId, createdAt])
+}
+
+// ==================== AUDIT LOGS ====================
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  actor      User?    @relation("LogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   @db.VarChar(100)
+  entityType String   @map("entity_type") @db.VarChar(50)
+  entityId   String   @map("entity_id") @db.Uuid
+  diffData   Json?    @map("diff_data")
+  ipAddress  String   @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.VarChar(512)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("audit_logs")
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+}
