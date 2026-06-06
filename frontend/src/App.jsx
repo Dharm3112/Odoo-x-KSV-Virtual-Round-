@@ -11,6 +11,8 @@ import PurchaseOrders from './pages/PurchaseOrders';
 import Reports from './pages/Reports';
 import ActivityLogs from './pages/ActivityLogs';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PreferencesProvider } from './context/PreferencesContext';
+import { ToastProvider } from './hooks/useToasts.jsx';
 
 const Splash = () => (
   <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
@@ -60,11 +62,15 @@ const AppRoutes = () => (
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="bg-surface text-on-surface font-body-md min-h-screen selection:bg-secondary-fixed selection:text-on-secondary-fixed">
-          <AppRoutes />
-        </div>
-      </Router>
+      <PreferencesProvider>
+        <ToastProvider>
+          <Router>
+            <div className="bg-surface text-on-surface font-body-md min-h-screen selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+              <AppRoutes />
+            </div>
+          </Router>
+        </ToastProvider>
+      </PreferencesProvider>
     </AuthProvider>
   );
 }

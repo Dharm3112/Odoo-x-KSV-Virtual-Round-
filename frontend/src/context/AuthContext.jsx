@@ -51,7 +51,7 @@ const inferRoleFromEmail = (email) => {
   return 'officer';
 };
 
-const buildUser = ({ email, firstName, lastName, role }) => {
+const buildUser = ({ email, firstName, lastName, role, phone, country }) => {
   const safeRole = ROLES[role] ? role : 'officer';
   const fullName = firstName && lastName
     ? `${firstName} ${lastName}`.trim()
@@ -60,11 +60,17 @@ const buildUser = ({ email, firstName, lastName, role }) => {
     id: `u_${Date.now()}`,
     email,
     name: fullName,
+    firstName: firstName || fullName.split(' ')[0] || '',
+    lastName: lastName || fullName.split(' ').slice(1).join(' ') || '',
     initials: fullName.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0].toUpperCase()).join(''),
     role: safeRole,
+    phone: phone || '',
+    country: country || '',
     createdAt: new Date().toISOString(),
   };
 };
+
+const recomputeInitials = (name) => name.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0].toUpperCase()).join('');
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -147,6 +153,27 @@ export const AuthProvider = ({ children }) => {
     return { ok: true, message: `A reset link has been sent to ${email}. Check your inbox.` };
   };
 
+  const updateProfile = async (patch) => {
+    await new Promise((r) => setTimeout(r, 400));
+    if (!user) return { ok: false, message: 'Not signed in.' };
+    if (patch.email && !emailIsValid(patch.email)) {
+      return { ok: false, field: 'email', message: 'Please enter a valid email address.' };
+    }
+    const firstName = patch.firstName ?? user.firstName;
+    const lastName = patch.lastName ?? user.lastName;
+    const name = patch.name || `${firstName} ${lastName}`.trim();
+    const next = {
+      ...user,
+      ...patch,
+      name,
+      firstName,
+      lastName,
+      initials: recomputeInitials(name),
+    };
+    setUser(next);
+    return { ok: true, user: next };
+  };
+
   const can = (permission) => {
     if (!user) return false;
     const perms = ROLES[user.role]?.permissions || [];
@@ -157,7 +184,7 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
-  const value = { user, hydrated, login, signup, logout, forgotPassword, can, roles: ROLE_LIST, role: user ? ROLES[user.role] : null };
+  const value = { user, hydrated, login, signup, logout, forgotPassword, updateProfile, can, roles: ROLE_LIST, role: user ? ROLES[user.role] : null };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,6 +1,8 @@
 import React from 'react';
+import { useFormatCurrency } from '../utils/format';
 
 const Dashboard = () => {
+  const fmt = useFormatCurrency();
   return (
     <div className="container-page">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-element-gap mb-20">
@@ -80,7 +82,7 @@ const Dashboard = () => {
                 <div className="flex flex-col gap-1">
                   <span className="font-mono-data text-mono-data text-outline">10:42 AM</span>
                   <p className="font-data-lg text-data-lg text-primary">PO #8902 Approved</p>
-                  <p className="font-body-md text-body-md text-on-surface-variant">Lumina Textiles • $14,500.00</p>
+                  <p className="font-body-md text-body-md text-on-surface-variant">Lumina Textiles • {fmt(14500)}</p>
                 </div>
               </li>
               <li className="relative pl-8 group">

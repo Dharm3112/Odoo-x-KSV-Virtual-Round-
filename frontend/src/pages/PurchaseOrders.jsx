@@ -1,21 +1,91 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useToast } from '../hooks/useToasts.jsx';
+import { printPage, sendEmail, exportHTML } from '../utils/export';
+import { useFormatCurrency, useFormatDate } from '../utils/format';
 
 const PurchaseOrders = () => {
+  const toast = useToast();
+  const fmt = useFormatCurrency();
+  const fmtDate = useFormatDate();
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [email, setEmail] = useState('lumina.orders@luminatex.com');
+
+  const onPrint = () => {
+    printPage('PO-2023-8472');
+    toast.info('Opening print dialog…');
+  };
+
+  const buildPOHTML = () => `<!doctype html><html><head><meta charset="utf-8"/><title>PO-2023-8472</title>
+<style>
+  body { font-family: 'Space Grotesk', system-ui, sans-serif; color: #1a1a1a; margin: 48px; }
+  h1 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
+  .meta { color: #6b6b6b; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin: 24px 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  th, td { text-align: left; padding: 10px 0; border-bottom: 1px solid #e5e1d8; font-size: 14px; }
+  th { color: #6b6b6b; font-weight: 500; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .right { text-align: right; }
+  .total { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; }
+  .row { display: flex; justify-content: space-between; padding: 6px 0; }
+</style></head><body>
+<p class="meta">Purchase Order</p>
+<h1>PO-2023-8472</h1>
+<p class="meta">Issued Oct 24, 2023 • Delivery Nov 15, 2023</p>
+<div class="grid">
+  <div><p class="meta">Vendor</p><p><strong>Lumina Textiles &amp; Co.</strong></p><p>482 Silk Road Avenue, Suite 300<br/>Milan, MI 20121, Italy</p><p class="meta">VEN-9942</p></div>
+  <div><p class="meta">Ship To</p><p><strong>VendorBridge HQ</strong></p><p>100 North Riverside Plaza, Receiving Dock B<br/>Chicago, IL 60606, USA</p><p class="meta">ATTN: Sarah Jenkins</p></div>
+</div>
+<table>
+  <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Unit</th><th class="right">Amount</th></tr></thead>
+  <tbody>
+    <tr><td>Premium Linen Blend - Ivory<br/><span class="meta">SKU: TX-LIN-IV-01</span></td><td class="right">2,500 yds</td><td class="right">${fmt(14.5)}</td><td class="right">${fmt(36250)}</td></tr>
+    <tr><td>Silk Organza Roll - Charcoal<br/><span class="meta">SKU: TX-SLK-CH-99</span></td><td class="right">800 yds</td><td class="right">${fmt(28)}</td><td class="right">${fmt(22400)}</td></tr>
+    <tr><td>Custom Dye Formulation<br/><span class="meta">Service Fee - Lot A</span></td><td class="right">1</td><td class="right">${fmt(1200)}</td><td class="right">${fmt(1200)}</td></tr>
+  </tbody>
+</table>
+<div style="margin-top:24px; margin-left:auto; width: 320px;">
+  <div class="row"><span>Subtotal</span><span>${fmt(59850)}</span></div>
+  <div class="row"><span>Shipping (Air Freight)</span><span>${fmt(3400)}</span></div>
+  <div class="row"><span>Tax (VAT 22%)</span><span>${fmt(13915)}</span></div>
+  <div class="row" style="border-top:1px solid #e5e1d8; padding-top: 12px; margin-top: 8px;"><span class="meta">Total Due</span><span class="total">${fmt(77165)}</span></div>
+</div>
+<p class="meta" style="margin-top:48px">Terms: Please confirm receipt within 48 hours. Net 30 payment terms apply.</p>
+</body></html>`;
+
+  const onDownloadPDF = () => {
+    exportHTML(buildPOHTML(), 'PO-2023-8472.html');
+    toast.success('PO-2023-8472 downloaded. Open the HTML file in your browser to print or save as PDF.');
+  };
+
+  const onSendEmail = () => setEmailOpen(true);
+
+  const submitEmail = () => {
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+    const subject = 'Purchase Order PO-2023-8472 from VendorBridge';
+    const body = `Dear Lumina Textiles team,\n\nPlease find attached purchase order PO-2023-8472 (${fmt(77165)} total).\n\nDelivery is requested by Nov 15, 2023. Please confirm receipt within 48 hours.\n\nBest,\nVendorBridge`;
+    sendEmail({ to: email, subject, body });
+    setEmailOpen(false);
+    toast.success(`Drafted email to ${email} in your default mail client.`);
+  };
+
   return (
     <div className="flex-1 min-h-screen bg-background relative overflow-x-hidden">
       <div className="container-page max-w-[1200px] py-12">
         <div className="bg-surface-container-lowest w-full rounded shadow-[0_10px_40px_-10px_rgba(0,0,0,0.03)] p-8 md:p-16 relative">
-          
+
           <div className="absolute top-8 right-8 md:top-12 md:right-12 flex gap-2 glass-panel px-2 py-1 rounded z-10 border border-outline-variant/20">
-            <button className="flex items-center gap-2 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high transition-colors rounded">
+            <button onClick={onPrint} className="flex items-center gap-2 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high transition-colors rounded">
               <span className="material-symbols-outlined text-[16px]">print</span>
               <span className="hidden md:inline">Print</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high transition-colors rounded">
+            <button onClick={onSendEmail} className="flex items-center gap-2 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high transition-colors rounded">
               <span className="material-symbols-outlined text-[16px]">mail</span>
               <span className="hidden md:inline">Send Email</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-primary font-label-caps text-label-caps bg-surface-container-high hover:bg-surface-container-highest transition-colors rounded">
+            <button onClick={onDownloadPDF} className="flex items-center gap-2 px-3 py-2 text-primary font-label-caps text-label-caps bg-surface-container-high hover:bg-surface-container-highest transition-colors rounded">
               <span className="material-symbols-outlined text-[16px]">download</span>
               <span className="hidden md:inline">Download PDF</span>
             </button>
@@ -24,15 +94,15 @@ const PurchaseOrders = () => {
           <div className="mb-20 pt-16 md:pt-0 max-w-[70%]">
             <div className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.1em] mb-4">Purchase Order</div>
             <h2 className="font-display-lg text-display-lg text-on-surface">PO-2023-8472</h2>
-            
+
             <div className="mt-8 flex flex-wrap gap-12 border-t border-outline-variant border-thin pt-6">
               <div>
                 <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Issue Date</p>
-                <p className="font-mono-data text-mono-data text-on-surface">Oct 24, 2023</p>
+                <p className="font-mono-data text-mono-data text-on-surface">{fmtDate('2023-10-24')}</p>
               </div>
               <div>
                 <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Delivery Date</p>
-                <p className="font-mono-data text-mono-data text-on-surface">Nov 15, 2023</p>
+                <p className="font-mono-data text-mono-data text-on-surface">{fmtDate('2023-11-15')}</p>
               </div>
               <div>
                 <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Status</p>
@@ -55,7 +125,7 @@ const PurchaseOrders = () => {
               </p>
               <p className="font-mono-data text-mono-data text-on-surface-variant mt-4">ID: VEN-9942</p>
             </div>
-            
+
             <div className="md:col-span-5 md:col-start-7 md:mt-12">
               <h3 className="font-label-caps text-label-caps text-on-surface-variant uppercase border-b border-thin border-outline-variant pb-2 mb-4">Shipping Destination</h3>
               <p className="font-data-lg text-data-lg text-on-surface mb-2">VendorBridge HQ</p>
@@ -86,8 +156,8 @@ const PurchaseOrders = () => {
                     <p className="font-mono-data text-mono-data text-on-surface-variant mt-1">SKU: TX-LIN-IV-01</p>
                   </td>
                   <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">2,500 yds</td>
-                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">$14.50</td>
-                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">$36,250.00</td>
+                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">{fmt(14.5)}</td>
+                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">{fmt(36250)}</td>
                 </tr>
                 <tr className="border-b border-thin border-outline-variant hover:bg-surface-bright transition-colors">
                   <td className="py-6 pr-4">
@@ -95,8 +165,8 @@ const PurchaseOrders = () => {
                     <p className="font-mono-data text-mono-data text-on-surface-variant mt-1">SKU: TX-SLK-CH-99</p>
                   </td>
                   <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">800 yds</td>
-                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">$28.00</td>
-                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">$22,400.00</td>
+                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">{fmt(28)}</td>
+                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">{fmt(22400)}</td>
                 </tr>
                 <tr className="border-b border-thin border-outline-variant hover:bg-surface-bright transition-colors">
                   <td className="py-6 pr-4">
@@ -104,8 +174,8 @@ const PurchaseOrders = () => {
                     <p className="font-mono-data text-mono-data text-on-surface-variant mt-1">Service Fee - Lot A</p>
                   </td>
                   <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">1</td>
-                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">$1,200.00</td>
-                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">$1,200.00</td>
+                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">{fmt(1200)}</td>
+                  <td className="py-6 font-mono-data text-mono-data text-on-surface text-right">{fmt(1200)}</td>
                 </tr>
               </tbody>
             </table>
@@ -115,19 +185,19 @@ const PurchaseOrders = () => {
             <div className="w-full md:w-[320px]">
               <div className="flex justify-between py-3">
                 <span className="font-body-md text-body-md text-on-surface-variant">Subtotal</span>
-                <span className="font-mono-data text-mono-data text-on-surface">$59,850.00</span>
+                <span className="font-mono-data text-mono-data text-on-surface">{fmt(59850)}</span>
               </div>
               <div className="flex justify-between py-3">
                 <span className="font-body-md text-body-md text-on-surface-variant">Shipping (Air Freight)</span>
-                <span className="font-mono-data text-mono-data text-on-surface">$3,400.00</span>
+                <span className="font-mono-data text-mono-data text-on-surface">{fmt(3400)}</span>
               </div>
               <div className="flex justify-between py-3">
                 <span className="font-body-md text-body-md text-on-surface-variant">Tax (VAT 22%)</span>
-                <span className="font-mono-data text-mono-data text-on-surface">$13,915.00</span>
+                <span className="font-mono-data text-mono-data text-on-surface">{fmt(13915)}</span>
               </div>
               <div className="flex justify-between items-center py-6 mt-4 border-t border-outline-variant border-thin">
                 <span className="font-label-caps text-label-caps text-on-surface uppercase tracking-widest">Total Due</span>
-                <span className="font-headline-sm text-headline-sm text-on-surface">$77,165.00</span>
+                <span className="font-headline-sm text-headline-sm text-on-surface">{fmt(77165)}</span>
               </div>
             </div>
           </div>
@@ -140,6 +210,36 @@ const PurchaseOrders = () => {
           </div>
         </div>
       </div>
+
+      {emailOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/10 backdrop-blur-[2px]" onClick={() => setEmailOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Send PO via email" className="bg-surface-container-lowest rounded-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.2)] border border-outline-variant/20 w-full max-w-md p-8">
+            <div className="flex items-start gap-4 mb-6">
+              <span className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined">mail</span>
+              </span>
+              <div>
+                <h3 className="font-headline-sm text-headline-sm text-primary mb-1">Send PO via email</h3>
+                <p className="font-body-md text-sm text-on-surface-variant">A prefilled draft will open in your default mail client.</p>
+              </div>
+            </div>
+            <label className="block mb-6">
+              <span className="font-label-caps text-label-caps text-on-surface-variant mb-2 block uppercase tracking-widest">Recipient</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border border-outline-variant rounded px-4 py-3 bg-transparent font-body-md text-body-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all"
+                placeholder="vendor@example.com"
+              />
+            </label>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setEmailOpen(false)} className="px-5 py-2.5 rounded-full font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-bright transition-colors">Cancel</button>
+              <button onClick={submitEmail} className="px-5 py-2.5 rounded-full bg-primary text-on-primary font-label-caps text-label-caps hover:bg-tertiary transition-colors">Open draft</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,21 +1,35 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import NotificationsDropdown from './NotificationsDropdown';
+import ProfileModal from './ProfileModal';
+import PreferencesModal from './PreferencesModal';
+import Toaster from './Toast';
 
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const userMenuRef = useRef(null);
+  const notifRef = useRef(null);
 
   useEffect(() => {
     const onClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
+
+  useEffect(() => {
+    setUserMenuOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
@@ -30,7 +44,7 @@ const Layout = () => {
 
   const onLogout = () => {
     logout();
-    setMenuOpen(false);
+    setUserMenuOpen(false);
     navigate('/login', { replace: true });
   };
 
@@ -44,21 +58,34 @@ const Layout = () => {
             <div className="absolute bottom-0 left-8 right-0 h-[1px] bg-outline-variant scale-x-0 group-focus-within:scale-x-100 transition-transform origin-left" />
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="text-on-surface-variant hover:text-primary transition-opacity hover:opacity-80 flex items-center justify-center relative">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
-            <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full" />
-          </button>
-          <button className="text-on-surface-variant hover:text-primary transition-opacity hover:opacity-80 flex items-center justify-center">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => setNotifOpen((v) => !v)}
+              className="text-on-surface-variant hover:text-primary transition-opacity hover:opacity-80 flex items-center justify-center relative p-2 rounded-full hover:bg-surface-bright"
+              aria-label="Notifications"
+              aria-expanded={notifOpen}
+            >
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full ring-2 ring-surface" />
+            </button>
+            <NotificationsDropdown open={notifOpen} onClose={() => setNotifOpen(false)} />
+          </div>
+
+          <button
+            onClick={() => navigate('/activity-logs')}
+            className="text-on-surface-variant hover:text-primary transition-opacity hover:opacity-80 flex items-center justify-center p-2 rounded-full hover:bg-surface-bright"
+            aria-label="Messages"
+          >
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>chat_bubble</span>
           </button>
 
-          <div className="relative" ref={menuRef}>
+          <div className="relative" ref={userMenuRef}>
             <button
-              onClick={() => setMenuOpen((v) => !v)}
+              onClick={() => setUserMenuOpen((v) => !v)}
               className="flex items-center gap-3 pl-2 pr-3 py-1.5 rounded-full hover:bg-surface-bright transition-colors"
               aria-haspopup="menu"
-              aria-expanded={menuOpen}
+              aria-expanded={userMenuOpen}
             >
               <span className="w-8 h-8 rounded-full bg-primary text-on-primary font-data-lg text-data-lg flex items-center justify-center">{user?.initials || 'U'}</span>
               <div className="hidden md:flex flex-col items-start leading-tight">
@@ -68,7 +95,7 @@ const Layout = () => {
               <span className="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span>
             </button>
 
-            {menuOpen && (
+            {userMenuOpen && (
               <div className="absolute right-0 top-12 w-72 bg-surface-container-lowest rounded-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.15)] border border-outline-variant/20 p-3 z-50">
                 <div className="flex items-center gap-3 p-3 border-b border-outline-variant/20">
                   <span className="w-10 h-10 rounded-full bg-primary text-on-primary font-data-lg text-data-lg flex items-center justify-center">{user?.initials || 'U'}</span>
@@ -79,12 +106,12 @@ const Layout = () => {
                   </div>
                 </div>
                 <div className="py-1">
-                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-surface-bright transition-colors text-left">
+                  <button onClick={() => { setProfileOpen(true); setUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-surface-bright transition-colors text-left">
                     <span className="material-symbols-outlined text-[20px] text-on-surface-variant">person</span>
                     <span className="font-body-md text-body-md text-on-surface">Profile</span>
                   </button>
-                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-surface-bright transition-colors text-left">
-                    <span className="material-symbols-outlined text-[20px] text-on-surface-variant">settings</span>
+                  <button onClick={() => { setPrefsOpen(true); setUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-surface-bright transition-colors text-left">
+                    <span className="material-symbols-outlined text-[20px] text-on-surface-variant">tune</span>
                     <span className="font-body-md text-body-md text-on-surface">Preferences</span>
                   </button>
                 </div>
@@ -128,11 +155,11 @@ const Layout = () => {
         </nav>
 
         <div className="mt-auto flex flex-col gap-1 pt-8 border-t border-on-secondary/10 mx-6">
-          <button className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px]" type="button">
+          <button onClick={() => setPrefsOpen(true)} className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px] text-left" type="button">
             <span className="material-symbols-outlined font-light">settings</span>
             Settings
           </button>
-          <button onClick={onLogout} className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px]" type="button">
+          <button onClick={onLogout} className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px] text-left" type="button">
             <span className="material-symbols-outlined font-light">logout</span>
             Sign out
           </button>
@@ -142,6 +169,10 @@ const Layout = () => {
       <main className="ml-[260px] pt-16 min-h-screen flex flex-col">
         <Outlet />
       </main>
+
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+      <PreferencesModal open={prefsOpen} onClose={() => setPrefsOpen(false)} />
+      <Toaster />
     </>
   );
 };
