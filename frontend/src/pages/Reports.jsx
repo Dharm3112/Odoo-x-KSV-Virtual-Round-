@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../hooks/useToasts.jsx';
-import { exportCSV, exportPDF } from '../utils/export';
+import { exportCSV, exportReportsPDF } from '../utils/export';
 import { useFormatCurrency, useFormatCurrencyCompact } from '../utils/format';
 
 const ALLOCATION = [
@@ -37,33 +37,38 @@ const Reports = () => {
 
   const onGenerateReport = () => setConfirmOpen(true);
 
-  const buildReport = () => {
-    exportPDF({
+  const buildReport = async () => {
+    const kpis = [
+      { label: 'Total Spend', value: fmtCompact(14200000), delta: '+8.4%', deltaPositive: true, sub: 'vs last quarter' },
+      { label: 'Active Vendors', value: '342', delta: 'Stable', deltaPositive: true, sub: 'allocation' },
+      { label: 'Open POs', value: '1,840', delta: '−2.1%', deltaPositive: false, sub: 'clearance rate' },
+      { label: 'Cost Savings', value: fmtCompact(845000), delta: '+12.5%', deltaPositive: true, sub: 'negotiation yield' },
+    ];
+    const allocation = ALLOCATION.map((r, i) => ({
+      ...r,
+      color: ['#615e57', '#8e8b83', '#a8a39a', '#c4c0b8', '#dad6cf'][i] || '#615e57',
+    }));
+    const risk = [
+      { tier: 'Monitor', value: 18, bg: '#eae6df', ink: '#6b6b6b' },
+      { tier: 'Critical', value: 8, bg: '#c4c0b8', ink: '#1a1a1a' },
+      { tier: 'Stable', value: 62, bg: '#fafaf7', ink: '#9a9a9a' },
+      { tier: 'Watchlist', value: 12, bg: '#dcd5c5', ink: '#1a1a1a' },
+    ];
+    await exportReportsPDF({
+      kpis, allocation, risk,
       filename: `vendorbridge-q3-report-${new Date().toISOString().slice(0, 10)}.pdf`,
-      title: 'Q3 Performance Report',
-      subtitle: 'Reports & Analytics — VendorBridge Enterprise',
-      meta: {
-        'Total spend': fmtCompact(14200000),
-        'Active vendors': '342',
-        'Open POs': '1,840',
-        'Cost savings': fmtCompact(845000),
-      },
-      columns: [
-        { key: 'name', label: 'Category / Tier' },
-        { key: 'metric', label: 'Metric', align: 'right' },
-        { key: 'delta', label: 'Δ vs Last Quarter' },
-      ],
-      rows: [
-        ...ALLOCATION.map((r) => ({ name: r.name, metric: `${r.share}%`, delta: '—' })),
-        ...RISK.map((r) => ({ name: `Risk — ${r.tier}`, metric: `${r.value}%`, delta: '—' })),
-      ],
     });
   };
 
-  const onConfirmGenerate = () => {
+  const onConfirmGenerate = async () => {
     setConfirmOpen(false);
-    buildReport();
-    toast.success('Q3 performance PDF generated.');
+    try {
+      await buildReport();
+      toast.success('Q3 performance PDF generated.');
+    } catch (err) {
+      console.error('Generate report failed', err);
+      toast.error(`Could not generate PDF: ${err?.message || 'unknown error'}`);
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../hooks/useToasts.jsx';
-import { printPage, sendEmail, exportPDF } from '../utils/export';
+import { printPage, sendEmail, exportPOPDF } from '../utils/export';
 import { useFormatCurrency, useFormatDate } from '../utils/format';
 
 const PurchaseOrders = () => {
@@ -15,32 +15,43 @@ const PurchaseOrders = () => {
     toast.info('Opening print dialog…');
   };
 
-  const onDownloadPDF = () => {
-    exportPDF({
-      filename: 'PO-2023-8472.pdf',
-      title: 'Purchase Order PO-2023-8472',
-      subtitle: 'Lumina Textiles & Co. → VendorBridge HQ',
-      meta: {
-        'Issue date': 'Oct 24, 2023',
-        'Delivery date': 'Nov 15, 2023',
-        'Vendor': 'Lumina Textiles & Co.',
-        'Ship to': 'VendorBridge HQ',
-        'Status': 'APPROVED',
-      },
-      columns: [
-        { key: 'item', label: 'Item' },
-        { key: 'sku', label: 'SKU' },
-        { key: 'qty', label: 'Qty', align: 'right' },
-        { key: 'unit', label: 'Unit Price', align: 'right', format: (r) => fmt(r.unit) },
-        { key: 'amount', label: 'Amount', align: 'right', format: (r) => fmt(r.amount) },
-      ],
-      rows: [
-        { item: 'Premium Linen Blend - Ivory', sku: 'TX-LIN-IV-01', qty: '2,500 yds', unit: 14.5, amount: 36250 },
-        { item: 'Silk Organza Roll - Charcoal', sku: 'TX-SLK-CH-99', qty: '800 yds', unit: 28, amount: 22400 },
-        { item: 'Custom Dye Formulation', sku: 'Service Fee - Lot A', qty: '1', unit: 1200, amount: 1200 },
-      ],
-    });
-    toast.success('PO-2023-8472.pdf downloaded.');
+  const onDownloadPDF = async () => {
+    try {
+      await exportPOPDF({
+        po: {
+          number: 'PO-2023-8472',
+          issueDate: fmtDate('2023-10-24'),
+          deliveryDate: fmtDate('2023-11-15'),
+          status: 'APPROVED',
+          terms: 'Please confirm receipt of this purchase order within 48 hours. Goods must be delivered according to the specified delivery date. Any variations in quantity or price must be approved in writing prior to shipment. Net 30 payment terms apply unless otherwise stipulated in the master vendor agreement.',
+        },
+        vendor: {
+          name: 'Lumina Textiles & Co.',
+          address: '482 Silk Road Avenue, Suite 300\nMilan, MI 20121\nItaly',
+          id: 'ID: VEN-9942',
+        },
+        shipTo: {
+          name: 'VendorBridge HQ',
+          address: '100 North Riverside Plaza\nReceiving Dock B\nChicago, IL 60606\nUnited States',
+          attn: 'ATTN: Sarah Jenkins',
+        },
+        lineItems: [
+          { item: 'Premium Linen Blend - Ivory', sku: 'SKU: TX-LIN-IV-01', qty: '2,500 yds', unit: fmt(14.5), amount: fmt(36250) },
+          { item: 'Silk Organza Roll - Charcoal', sku: 'SKU: TX-SLK-CH-99', qty: '800 yds', unit: fmt(28), amount: fmt(22400) },
+          { item: 'Custom Dye Formulation', sku: 'Service Fee - Lot A', qty: '1', unit: fmt(1200), amount: fmt(1200) },
+        ],
+        totals: {
+          subtotal: fmt(59850),
+          shipping: fmt(3400),
+          tax: fmt(13915),
+        },
+        filename: 'PO-2023-8472.pdf',
+      });
+      toast.success('PO-2023-8472.pdf downloaded.');
+    } catch (err) {
+      console.error('PO PDF export failed', err);
+      toast.error(`Could not generate PDF: ${err?.message || 'unknown error'}`);
+    }
   };
 
   const onSendEmail = () => setEmailOpen(true);
