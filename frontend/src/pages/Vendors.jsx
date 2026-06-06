@@ -1,14 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../hooks/useToasts.jsx';
 import { useFormatCurrency, useFormatDate } from '../utils/format';
-
-const SEED_VENDORS = [
-  { id: 'v1', name: 'Aura Textiles Ltd.', code: 'VND-8820-UK', categories: 'Cashmere, Silk, Hardware', gst: 'GB 123 4567 89', contact: 'E. Sinclair', email: 'elena@auratex.co.uk', status: 'Approved', statusKind: 'approved' },
-  { id: 'v2', name: 'Atelier Maison Noir', code: 'VND-4019-FR', categories: 'Leather Goods, Packaging', gst: 'FR 89 876 543 210', contact: 'J. Dubois', email: 'contact@maisonnoir.fr', status: 'Approved', statusKind: 'approved' },
-  { id: 'v3', name: 'Lumina Glassworks', code: 'VND-9932-IT', categories: 'Display Cabinets, Fixtures', gst: 'IT 01234567890', contact: 'M. Rossi', email: 'm.rossi@luminaglass.it', status: 'Pending Audit', statusKind: 'pending' },
-  { id: 'v4', name: 'Nordic Timber Co.', code: 'VND-1102-SE', categories: 'Raw Materials, Pallets', gst: 'SE 556677889901', contact: 'L. Berg', email: 'logistics@nordictimber.se', status: 'Inactive', statusKind: 'inactive' },
-];
+import { exportPDF } from '../utils/export';
+import VENDORS from '../data/vendors';
 
 const STATUS_CLASS = {
   approved: 'bg-[#e8f3e8] text-[#2e592e]',
@@ -16,16 +11,41 @@ const STATUS_CLASS = {
   inactive: 'bg-surface-variant text-on-surface-variant',
 };
 
+const STATUS_LABEL = {
+  approved: 'Approved',
+  pending: 'Pending Audit',
+  inactive: 'Inactive',
+};
+
 const Vendors = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const fmt = useFormatCurrency();
   const fmtDate = useFormatDate();
-  const [vendors, setVendors] = useState(SEED_VENDORS);
+  const [vendors, setVendors] = useState(VENDORS);
   const [drawerVendorId, setDrawerVendorId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ name: '', categories: '', country: 'United Kingdom', contact: '', email: '' });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('add') === '1') {
+      setAddOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('add');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return vendors;
+    return vendors.filter((v) => {
+      const hay = `${v.name} ${v.code} ${v.categories} ${v.country} ${v.city} ${v.contact} ${v.email} ${v.gst} ${v.status}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [vendors, search]);
 
   const openDrawer = (id) => {
     setDrawerVendorId(id);
@@ -63,13 +83,58 @@ const Vendors = () => {
       gst: 'Pending verification',
       contact: form.contact.trim() || '—',
       email: form.email.trim() || '—',
+      country: form.country,
+      city: '—',
       status: 'Pending Audit',
       statusKind: 'pending',
+      rating: 0,
+      onTimeRate: 0,
+      poVolume: 0,
+      joined: new Date().toISOString().slice(0, 10),
+      paymentTerms: 'Net 30',
     };
     setVendors((arr) => [newVendor, ...arr]);
     setAddOpen(false);
     setForm({ name: '', categories: '', country: 'United Kingdom', contact: '', email: '' });
     toast.success(`${newVendor.name} added to vendor directory.`);
+  };
+
+  const onExportPDF = () => {
+    const list = filtered;
+    if (list.length === 0) {
+      toast.error('No vendors to export.');
+      return;
+    }
+    exportPDF({
+      filename: `vendor-directory-${new Date().toISOString().slice(0, 10)}.pdf`,
+      title: 'Vendor Directory',
+      subtitle: search.trim() ? `Search: "${search.trim()}"` : 'All vendors',
+      meta: {
+        'Total records': list.length,
+        'Approved': list.filter((v) => v.statusKind === 'approved').length,
+        'Pending audit': list.filter((v) => v.statusKind === 'pending').length,
+        'Inactive': list.filter((v) => v.statusKind === 'inactive').length,
+      },
+      columns: [
+        { key: 'name', label: 'Vendor' },
+        { key: 'code', label: 'Code' },
+        { key: 'country', label: 'Country' },
+        { key: 'categories', label: 'Categories' },
+        { key: 'contact', label: 'Contact' },
+        { key: 'email', label: 'Email' },
+        { key: 'gst', label: 'GST / VAT' },
+        {
+          key: 'paymentTerms', label: 'Terms', format: (r) => r.paymentTerms,
+        },
+        {
+          key: 'poVolume', label: 'PO Volume (YTD)', align: 'right',
+          format: (r) => fmt(r.poVolume),
+        },
+        { key: 'status', label: 'Status' },
+      ],
+      rows: list,
+    });
+    toast.success(`Exported ${list.length} vendor${list.length === 1 ? '' : 's'} to PDF.`);
   };
 
   const drawerVendor = vendors.find((v) => v.id === drawerVendorId) || vendors[0];
@@ -82,53 +147,97 @@ const Vendors = () => {
             <h2 className="font-display-lg text-display-lg text-primary mb-2">Vendor Directory</h2>
             <p className="font-body-md text-body-md text-on-surface-variant max-w-md">Manage your network of luxury suppliers, track compliance, and orchestrate global logistics.</p>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="relative flex items-center w-64">
               <span className="material-symbols-outlined absolute left-0 text-on-surface-variant text-[18px]">search</span>
-              <input className="input-minimal w-full pl-8 pb-2 font-body-md text-body-md text-primary placeholder:text-on-surface-variant/50" placeholder="Search vendors..." type="text"/>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="input-minimal w-full pl-8 pb-2 font-body-md text-body-md text-primary placeholder:text-on-surface-variant/50"
+                placeholder="Search by name, code, country, GST…"
+                type="text"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
+                  className="absolute right-0 text-on-surface-variant hover:text-primary p-1"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              )}
             </div>
+            <button onClick={onExportPDF} className="bg-transparent text-primary border border-outline-variant px-5 py-3 rounded font-label-caps text-label-caps tracking-wider hover:bg-surface-variant transition-colors duration-300 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+              Export PDF
+            </button>
             <button onClick={() => setAddOpen(true)} className="bg-primary-container text-on-primary px-6 py-3 rounded font-label-caps text-label-caps tracking-wider hover:bg-tertiary transition-colors duration-300">
               Add Vendor
             </button>
           </div>
         </div>
 
+        {search && (
+          <div className="mb-4 flex items-center gap-3 text-sm text-on-surface-variant font-mono-data">
+            <span className="material-symbols-outlined text-[16px]">filter_list</span>
+            <span>
+              Showing {filtered.length} of {vendors.length} vendor{vendors.length === 1 ? '' : 's'} matching "<span className="text-primary">{search}</span>"
+            </span>
+            <button onClick={() => setSearch('')} className="ml-auto text-primary hover:underline">Clear filter</button>
+          </div>
+        )}
+
         <div className="bg-surface-container-lowest rounded-xl shadow-editorial p-8 md:p-12 overflow-x-auto relative">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30 w-1/4">Vendor Name</th>
-                <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30">Categories</th>
-                <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30">GST Details</th>
-                <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30">Contact</th>
-                <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30 text-right pr-4">Status</th>
-              </tr>
-            </thead>
-            <tbody className="font-body-md text-body-md text-primary">
-              {vendors.map((v, idx) => (
-                <tr key={v.id} className="group cursor-pointer hover:bg-surface-bright transition-colors duration-200 border-b border-outline-variant/20 last:border-0 animate-fade-in-up" style={{ animationDelay: `${(idx + 1) * 100}ms` }} onClick={() => openDrawer(v.id)}>
-                  <td className="py-8 pr-6">
-                    <div className="font-data-lg text-data-lg font-medium mb-1 group-hover:text-tertiary-container transition-colors">{v.name}</div>
-                    <div className="font-mono-data text-mono-data text-on-surface-variant">{v.code}</div>
-                  </td>
-                  <td className="py-8 pr-6 text-on-surface-variant">{v.categories}</td>
-                  <td className="py-8 pr-6 text-on-surface-variant font-mono-data">{v.gst}</td>
-                  <td className="py-8 pr-6">
-                    <div>{v.contact}</div>
-                    <div className="text-on-surface-variant text-sm mt-1">{v.email}</div>
-                  </td>
-                  <td className="py-8 text-right pr-4">
-                    <span className={`inline-block px-3 py-1 font-label-caps text-label-caps rounded-full ${STATUS_CLASS[v.statusKind]}`}>{v.status}</span>
-                  </td>
+          {filtered.length === 0 ? (
+            <div className="text-center py-16">
+              <span className="material-symbols-outlined text-on-surface-variant text-[40px]">search_off</span>
+              <p className="font-body-md text-body-md text-on-surface-variant mt-4">No vendors match your search.</p>
+              <button onClick={() => setSearch('')} className="mt-3 text-primary hover:underline text-sm">Clear search</button>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr>
+                  <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30 w-1/4">Vendor Name</th>
+                  <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30">Categories</th>
+                  <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30">Location</th>
+                  <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30">Contact</th>
+                  <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30 text-right">PO Volume</th>
+                  <th className="font-label-caps text-label-caps text-on-surface-variant pb-6 font-medium border-b border-outline-variant/30 text-right pr-4">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="font-body-md text-body-md text-primary">
+                {filtered.map((v, idx) => (
+                  <tr key={v.id} className="group cursor-pointer hover:bg-surface-bright transition-colors duration-200 border-b border-outline-variant/20 last:border-0 animate-fade-in-up" style={{ animationDelay: `${Math.min((idx + 1) * 60, 600)}ms` }} onClick={() => openDrawer(v.id)}>
+                    <td className="py-6 pr-6">
+                      <div className="font-data-lg text-data-lg font-medium mb-1 group-hover:text-tertiary-container transition-colors">{v.name}</div>
+                      <div className="font-mono-data text-mono-data text-on-surface-variant">{v.code}</div>
+                    </td>
+                    <td className="py-6 pr-6 text-on-surface-variant">{v.categories}</td>
+                    <td className="py-6 pr-6 text-on-surface-variant">
+                      <div>{v.city}</div>
+                      <div className="font-mono-data text-mono-data text-on-surface-variant/70 mt-1">{v.country}</div>
+                    </td>
+                    <td className="py-6 pr-6">
+                      <div>{v.contact}</div>
+                      <div className="text-on-surface-variant text-sm mt-1">{v.email}</div>
+                    </td>
+                    <td className="py-6 pr-6 text-right font-mono-data text-mono-data text-primary">
+                      {fmt(v.poVolume)}
+                    </td>
+                    <td className="py-6 text-right pr-4">
+                      <span className={`inline-block px-3 py-1 font-label-caps text-label-caps rounded-full ${STATUS_CLASS[v.statusKind]}`}>{STATUS_LABEL[v.statusKind]}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="mt-8 flex justify-end items-center gap-4 text-on-surface-variant font-body-md text-sm">
           <span>Rows per page: 10</span>
-          <span className="mx-4">1-{vendors.length} of {vendors.length + 120}</span>
+          <span className="mx-4">1-{filtered.length} of {vendors.length}</span>
           <div className="flex gap-2">
             <button className="p-1 hover:text-primary transition-colors disabled:opacity-30" disabled><span className="material-symbols-outlined text-[20px]">chevron_left</span></button>
             <button className="p-1 hover:text-primary transition-colors"><span className="material-symbols-outlined text-[20px]">chevron_right</span></button>
@@ -154,9 +263,9 @@ const Vendors = () => {
         >
           <div className="sticky top-0 bg-surface-container-lowest/80 backdrop-blur-md px-10 py-8 flex justify-between items-start border-b border-outline-variant/20 z-10">
             <div>
-              <span className={`inline-block px-3 py-1 font-label-caps text-label-caps rounded-full mb-4 ${STATUS_CLASS[drawerVendor.statusKind]}`}>{drawerVendor.status}</span>
+              <span className={`inline-block px-3 py-1 font-label-caps text-label-caps rounded-full mb-4 ${STATUS_CLASS[drawerVendor.statusKind]}`}>{STATUS_LABEL[drawerVendor.statusKind]}</span>
               <h3 className="font-display-md text-display-md text-primary leading-tight">{drawerVendor.name}</h3>
-              <p className="font-mono-data text-mono-data text-on-surface-variant mt-2">{drawerVendor.code}</p>
+              <p className="font-mono-data text-mono-data text-on-surface-variant mt-2">{drawerVendor.code} • {drawerVendor.city}, {drawerVendor.country}</p>
             </div>
             <button className="p-2 -mr-2 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-bright" onClick={closeDrawer} aria-label="Close vendor details">
               <span className="material-symbols-outlined">close</span>
@@ -168,16 +277,13 @@ const Vendors = () => {
               <div>
                 <h4 className="font-label-caps text-label-caps text-on-surface-variant mb-2">Primary Contact</h4>
                 <p className="font-data-lg text-data-lg text-primary">{drawerVendor.contact}</p>
-                <p className="font-body-md text-body-md text-on-surface-variant mt-1">+44 20 7946 0958</p>
-                <p className="font-body-md text-body-md text-primary mt-1 underline decoration-outline-variant underline-offset-4">{drawerVendor.email}</p>
+                <p className="font-body-md text-body-md text-on-surface-variant mt-1">{drawerVendor.email}</p>
               </div>
               <div>
                 <h4 className="font-label-caps text-label-caps text-on-surface-variant mb-2">HQ Address</h4>
                 <p className="font-body-md text-body-md text-primary leading-relaxed">
-                  152 Silk Road<br/>
-                  Spitalfields<br/>
-                  London, E1 6FA<br/>
-                  United Kingdom
+                  {drawerVendor.city}<br/>
+                  {drawerVendor.country}
                 </p>
               </div>
               <div>
@@ -186,7 +292,22 @@ const Vendors = () => {
               </div>
               <div>
                 <h4 className="font-label-caps text-label-caps text-on-surface-variant mb-2">Payment Terms</h4>
-                <p className="font-body-md text-body-md text-primary">Net 45 Days</p>
+                <p className="font-body-md text-body-md text-primary">{drawerVendor.paymentTerms}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 mb-16">
+              <div className="bg-surface-bright rounded-lg p-5">
+                <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Rating</p>
+                <p className="font-display-md text-display-md text-primary leading-none">{drawerVendor.rating.toFixed(1)}</p>
+              </div>
+              <div className="bg-surface-bright rounded-lg p-5">
+                <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">On-time</p>
+                <p className="font-display-md text-display-md text-primary leading-none">{drawerVendor.onTimeRate}%</p>
+              </div>
+              <div className="bg-surface-bright rounded-lg p-5">
+                <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">YTD Volume</p>
+                <p className="font-data-lg text-data-lg text-primary leading-tight pt-1">{fmt(drawerVendor.poVolume)}</p>
               </div>
             </div>
 
@@ -206,13 +327,13 @@ const Vendors = () => {
                   <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-surface-container-lowest border border-outline-variant flex items-center justify-center">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                   </div>
-                  <p className="font-body-md text-body-md text-primary">Purchase Order <span className="font-mono-data">PO-24-0091</span> Issued</p>
-                  <p className="font-body-md text-sm text-on-surface-variant mt-1">Oct 12, 2023 • {fmt(45200)}</p>
+                  <p className="font-body-md text-body-md text-primary">Joined VendorBridge</p>
+                  <p className="font-body-md text-sm text-on-surface-variant mt-1">{fmtDate(drawerVendor.joined)}</p>
                 </div>
                 <div className="relative pl-8">
                   <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-surface-container-lowest border border-outline-variant"></div>
-                  <p className="font-body-md text-body-md text-primary">Annual Compliance Audit Passed</p>
-                  <p className="font-body-md text-sm text-on-surface-variant mt-1">Sep 05, 2023 • Sustainability Metrics Validated</p>
+                  <p className="font-body-md text-body-md text-primary">Last compliance check</p>
+                  <p className="font-body-md text-sm text-on-surface-variant mt-1">On file</p>
                 </div>
               </div>
             </div>

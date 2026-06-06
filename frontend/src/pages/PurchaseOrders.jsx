@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../hooks/useToasts.jsx';
-import { printPage, sendEmail, exportHTML } from '../utils/export';
+import { printPage, sendEmail, exportPDF } from '../utils/export';
 import { useFormatCurrency, useFormatDate } from '../utils/format';
 
 const PurchaseOrders = () => {
@@ -15,46 +15,32 @@ const PurchaseOrders = () => {
     toast.info('Opening print dialog…');
   };
 
-  const buildPOHTML = () => `<!doctype html><html><head><meta charset="utf-8"/><title>PO-2023-8472</title>
-<style>
-  body { font-family: 'Space Grotesk', system-ui, sans-serif; color: #1a1a1a; margin: 48px; }
-  h1 { font-family: 'Playfair Display', Georgia, serif; margin: 0; }
-  .meta { color: #6b6b6b; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin: 24px 0; }
-  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-  th, td { text-align: left; padding: 10px 0; border-bottom: 1px solid #e5e1d8; font-size: 14px; }
-  th { color: #6b6b6b; font-weight: 500; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
-  .right { text-align: right; }
-  .total { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; }
-  .row { display: flex; justify-content: space-between; padding: 6px 0; }
-</style></head><body>
-<p class="meta">Purchase Order</p>
-<h1>PO-2023-8472</h1>
-<p class="meta">Issued Oct 24, 2023 • Delivery Nov 15, 2023</p>
-<div class="grid">
-  <div><p class="meta">Vendor</p><p><strong>Lumina Textiles &amp; Co.</strong></p><p>482 Silk Road Avenue, Suite 300<br/>Milan, MI 20121, Italy</p><p class="meta">VEN-9942</p></div>
-  <div><p class="meta">Ship To</p><p><strong>VendorBridge HQ</strong></p><p>100 North Riverside Plaza, Receiving Dock B<br/>Chicago, IL 60606, USA</p><p class="meta">ATTN: Sarah Jenkins</p></div>
-</div>
-<table>
-  <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Unit</th><th class="right">Amount</th></tr></thead>
-  <tbody>
-    <tr><td>Premium Linen Blend - Ivory<br/><span class="meta">SKU: TX-LIN-IV-01</span></td><td class="right">2,500 yds</td><td class="right">${fmt(14.5)}</td><td class="right">${fmt(36250)}</td></tr>
-    <tr><td>Silk Organza Roll - Charcoal<br/><span class="meta">SKU: TX-SLK-CH-99</span></td><td class="right">800 yds</td><td class="right">${fmt(28)}</td><td class="right">${fmt(22400)}</td></tr>
-    <tr><td>Custom Dye Formulation<br/><span class="meta">Service Fee - Lot A</span></td><td class="right">1</td><td class="right">${fmt(1200)}</td><td class="right">${fmt(1200)}</td></tr>
-  </tbody>
-</table>
-<div style="margin-top:24px; margin-left:auto; width: 320px;">
-  <div class="row"><span>Subtotal</span><span>${fmt(59850)}</span></div>
-  <div class="row"><span>Shipping (Air Freight)</span><span>${fmt(3400)}</span></div>
-  <div class="row"><span>Tax (VAT 22%)</span><span>${fmt(13915)}</span></div>
-  <div class="row" style="border-top:1px solid #e5e1d8; padding-top: 12px; margin-top: 8px;"><span class="meta">Total Due</span><span class="total">${fmt(77165)}</span></div>
-</div>
-<p class="meta" style="margin-top:48px">Terms: Please confirm receipt within 48 hours. Net 30 payment terms apply.</p>
-</body></html>`;
-
   const onDownloadPDF = () => {
-    exportHTML(buildPOHTML(), 'PO-2023-8472.html');
-    toast.success('PO-2023-8472 downloaded. Open the HTML file in your browser to print or save as PDF.');
+    exportPDF({
+      filename: 'PO-2023-8472.pdf',
+      title: 'Purchase Order PO-2023-8472',
+      subtitle: 'Lumina Textiles & Co. → VendorBridge HQ',
+      meta: {
+        'Issue date': 'Oct 24, 2023',
+        'Delivery date': 'Nov 15, 2023',
+        'Vendor': 'Lumina Textiles & Co.',
+        'Ship to': 'VendorBridge HQ',
+        'Status': 'APPROVED',
+      },
+      columns: [
+        { key: 'item', label: 'Item' },
+        { key: 'sku', label: 'SKU' },
+        { key: 'qty', label: 'Qty', align: 'right' },
+        { key: 'unit', label: 'Unit Price', align: 'right', format: (r) => fmt(r.unit) },
+        { key: 'amount', label: 'Amount', align: 'right', format: (r) => fmt(r.amount) },
+      ],
+      rows: [
+        { item: 'Premium Linen Blend - Ivory', sku: 'TX-LIN-IV-01', qty: '2,500 yds', unit: 14.5, amount: 36250 },
+        { item: 'Silk Organza Roll - Charcoal', sku: 'TX-SLK-CH-99', qty: '800 yds', unit: 28, amount: 22400 },
+        { item: 'Custom Dye Formulation', sku: 'Service Fee - Lot A', qty: '1', unit: 1200, amount: 1200 },
+      ],
+    });
+    toast.success('PO-2023-8472.pdf downloaded.');
   };
 
   const onSendEmail = () => setEmailOpen(true);

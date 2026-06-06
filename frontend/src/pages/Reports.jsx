@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../hooks/useToasts.jsx';
-import { exportCSV, exportHTML } from '../utils/export';
+import { exportCSV, exportPDF } from '../utils/export';
 import { useFormatCurrency, useFormatCurrencyCompact } from '../utils/format';
 
 const ALLOCATION = [
@@ -37,53 +37,33 @@ const Reports = () => {
 
   const onGenerateReport = () => setConfirmOpen(true);
 
-  const buildReportHTML = () => {
-    const stamp = new Date().toLocaleString();
-    const allocRows = ALLOCATION.map(
-      (r) => `<tr><td>${r.name}</td><td style="text-align:right">${r.share}%</td></tr>`
-    ).join('');
-    const riskRows = RISK.map(
-      (r) => `<tr><td>${r.tier}</td><td style="text-align:right">${r.value}%</td></tr>`
-    ).join('');
-    return `<!doctype html>
-<html><head><meta charset="utf-8"/><title>VendorBridge — Q3 Performance Report</title>
-<style>
-  :root { color-scheme: light; }
-  body { font-family: 'Space Grotesk', -apple-system, system-ui, sans-serif; color: #1a1a1a; margin: 48px; background: #fafaf7; }
-  h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 36px; margin: 0 0 4px; }
-  h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; margin: 32px 0 8px; border-bottom: 1px solid #e5e1d8; padding-bottom: 6px; }
-  .meta { color: #6b6b6b; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
-  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; margin-top: 24px; }
-  .card { background: #fff; border: 1px solid #eae6df; border-radius: 12px; padding: 24px; }
-  .kpi { font-family: 'Playfair Display', Georgia, serif; font-size: 32px; margin: 4px 0; }
-  .label { color: #6b6b6b; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; }
-  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-  th, td { text-align: left; padding: 8px 0; border-bottom: 1px solid #f0ece4; font-size: 14px; }
-  th { color: #6b6b6b; font-weight: 500; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
-</style></head>
-<body>
-  <p class="meta">Q3 Performance • Generated ${stamp}</p>
-  <h1>Reports &amp; Analytics</h1>
-  <p class="meta">VendorBridge Enterprise — Internal</p>
-  <div class="grid">
-    <div class="card"><div class="label">Total Spend</div><div class="kpi">${fmtCompact(14200000)}</div><div class="meta">+8.4% vs last quarter</div></div>
-    <div class="card"><div class="label">Active Vendors</div><div class="kpi">342</div><div class="meta">Stable allocation</div></div>
-    <div class="card"><div class="label">Open POs</div><div class="kpi">1,840</div><div class="meta">-2.1% clearance rate</div></div>
-    <div class="card"><div class="label">Cost Savings</div><div class="kpi">${fmtCompact(845000)}</div><div class="meta">+12.5% negotiation yield</div></div>
-  </div>
-  <h2>Procurement Allocation</h2>
-  <table><thead><tr><th>Category</th><th style="text-align:right">Share</th></tr></thead><tbody>${allocRows}</tbody></table>
-  <h2>Risk Matrix</h2>
-  <table><thead><tr><th>Tier</th><th style="text-align:right">Share</th></tr></thead><tbody>${riskRows}</tbody></table>
-  <p class="meta" style="margin-top:48px">Open in browser and use Print → Save as PDF to export a PDF copy.</p>
-</body></html>`;
+  const buildReport = () => {
+    exportPDF({
+      filename: `vendorbridge-q3-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+      title: 'Q3 Performance Report',
+      subtitle: 'Reports & Analytics — VendorBridge Enterprise',
+      meta: {
+        'Total spend': fmtCompact(14200000),
+        'Active vendors': '342',
+        'Open POs': '1,840',
+        'Cost savings': fmtCompact(845000),
+      },
+      columns: [
+        { key: 'name', label: 'Category / Tier' },
+        { key: 'metric', label: 'Metric', align: 'right' },
+        { key: 'delta', label: 'Δ vs Last Quarter' },
+      ],
+      rows: [
+        ...ALLOCATION.map((r) => ({ name: r.name, metric: `${r.share}%`, delta: '—' })),
+        ...RISK.map((r) => ({ name: `Risk — ${r.tier}`, metric: `${r.value}%`, delta: '—' })),
+      ],
+    });
   };
 
   const onConfirmGenerate = () => {
     setConfirmOpen(false);
-    const html = buildReportHTML();
-    exportHTML(html, `vendorbridge-q3-report-${new Date().toISOString().slice(0, 10)}.html`);
-    toast.success('Q3 performance report generated. Open the HTML file in your browser to print or save as PDF.');
+    buildReport();
+    toast.success('Q3 performance PDF generated.');
   };
 
   return (

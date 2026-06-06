@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../hooks/useToasts.jsx';
 import { exportCSV } from '../utils/export';
 import { useFormatCurrency, useFormatDate, formatDateTime } from '../utils/format';
@@ -135,12 +135,34 @@ const ActivityLogs = () => {
   const toast = useToast();
   const fmtCurrency = useFormatCurrency();
   const fmtDate = useFormatDate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState('all');
+  const initialTab = (() => {
+    const t = searchParams.get('tab');
+    const valid = TABS.some((tab) => tab.id === t);
+    return valid ? t : 'all';
+  })();
+
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [range, setRange] = useState('7d');
   const [items, setItems] = useState(SEED);
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
+
+  useEffect(() => {
+    const next = searchParams.get('tab');
+    if (next && TABS.some((t) => t.id === next) && next !== activeTab) {
+      setActiveTab(next);
+    }
+  }, [searchParams]);
+
+  const onTabChange = (id) => {
+    setActiveTab(id);
+    const next = new URLSearchParams(searchParams);
+    if (id === 'all') next.delete('tab');
+    else next.set('tab', id);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     const onClick = (e) => {
@@ -224,7 +246,7 @@ const ActivityLogs = () => {
           return (
             <button
               key={t.id}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => onTabChange(t.id)}
               className={`font-data-lg text-data-lg pb-3 px-1 -mb-[1.5px] transition-colors ${isActive ? 'text-primary border-b-[1.5px] border-primary' : 'text-on-surface-variant hover:text-primary border-b-[1.5px] border-transparent'}`}
               aria-pressed={isActive}
             >
