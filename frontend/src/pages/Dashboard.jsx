@@ -134,6 +134,41 @@ const Dashboard = () => {
         </div>
       </section>
 
+      <section className="mb-20 animate-fade-in-up delay-450">
+        <div className="flex items-end justify-between mb-8 border-b border-outline-variant pb-4">
+          <div>
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase tracking-widest">Workflow</p>
+            <h2 className="font-headline-sm text-headline-sm text-primary">Procurement lifecycle</h2>
+          </div>
+          <span className="font-mono-data text-mono-data text-on-surface-variant">8 stages · end-to-end</span>
+        </div>
+        <div className="bg-surface-container-lowest rounded-xl luxury-shadow p-6 md:p-8 border border-outline-variant/10">
+          <ol className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            {[
+              { n: 1, label: 'Create RFQ', icon: 'request_quote', to: '/rfqs' },
+              { n: 2, label: 'Vendor quotes', icon: 'rate_review', to: '/vendor-quotation' },
+              { n: 3, label: 'Compare quotes', icon: 'compare_arrows', to: '/quotations' },
+              { n: 4, label: 'Approval', icon: 'fact_check', to: '/approvals' },
+              { n: 5, label: 'Generate PO', icon: 'shopping_cart', to: '/purchase-orders' },
+              { n: 6, label: 'Generate invoice', icon: 'receipt_long', to: '/purchase-orders' },
+              { n: 7, label: 'Print / Email', icon: 'print', to: '/purchase-orders' },
+              { n: 8, label: 'Logs & analytics', icon: 'analytics', to: '/reports' },
+            ].map((step, i) => (
+              <li key={step.n} className="relative">
+                <Link to={step.to} className="flex flex-col items-center text-center p-3 rounded-lg hover:bg-primary-container/10 transition-colors group">
+                  <div className="relative w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-[18px]">{step.icon}</span>
+                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-on-primary font-label-caps text-[9px] flex items-center justify-center">{step.n}</span>
+                  </div>
+                  <span className="font-label-caps text-label-caps text-on-surface uppercase tracking-widest text-[10px] leading-tight">{step.label}</span>
+                </Link>
+                {i < 7 && <span className="hidden lg:block absolute top-7 -right-1.5 material-symbols-outlined text-on-surface-variant/30 text-[16px]">arrow_forward</span>}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
       <section className="mb-20 animate-fade-in-up delay-500">
         <div className="flex items-end justify-between mb-8 border-b border-outline-variant pb-4">
           <div>

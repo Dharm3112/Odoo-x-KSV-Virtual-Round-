@@ -41,6 +41,7 @@ const Layout = () => {
     { name: 'Purchase Orders', path: '/purchase-orders', icon: 'shopping_cart' },
     { name: 'Reports', path: '/reports', icon: 'analytics' },
     { name: 'Activity', path: '/activity-logs', icon: 'history' },
+    { name: 'Admin', path: '/admin', icon: 'admin_panel_settings' },
   ];
 
   const onLogout = () => {

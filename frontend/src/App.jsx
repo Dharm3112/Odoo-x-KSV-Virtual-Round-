@@ -11,6 +11,7 @@ import Approvals from './pages/Approvals';
 import PurchaseOrders from './pages/PurchaseOrders';
 import Reports from './pages/Reports';
 import ActivityLogs from './pages/ActivityLogs';
+import Admin from './pages/Admin';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PreferencesProvider } from './context/PreferencesContext';
 import { ToastProvider } from './hooks/useToasts.jsx';
@@ -55,6 +56,7 @@ const AppRoutes = () => (
       <Route path="purchase-orders" element={<PurchaseOrders />} />
       <Route path="reports" element={<Reports />} />
       <Route path="activity-logs" element={<ActivityLogs />} />
+      <Route path="admin" element={<Admin />} />
     </Route>
 
     <Route path="*" element={<Navigate to="/dashboard" replace />} />

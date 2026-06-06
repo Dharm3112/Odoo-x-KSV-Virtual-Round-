@@ -102,6 +102,19 @@ const OLDER = [
   },
 ];
 
+const AUDIT_LOGS = [
+  { id: 'L-2841', ts: Date.now() - 15 * 60 * 1000, actor: 'sarah.jenkins@vendorbridge.com', role: 'Finance Director', action: 'PO_APPROVED', resource: 'PO-2023-4921', detail: 'Approved via workflow decision', ip: '10.42.18.7', session: 'sess_a8f1c2', result: 'success', severity: 'info' },
+  { id: 'L-2840', ts: Date.now() - 38 * 60 * 1000, actor: 'j.smith@vendorbridge.com', role: 'Procurement Officer', action: 'RFQ_CREATED', resource: 'RFQ-2024-915', detail: 'Cloud Hosting Annual Renewal', ip: '10.42.18.12', session: 'sess_2d9e4a', result: 'success', severity: 'info' },
+  { id: 'L-2839', ts: Date.now() - 1.2 * 60 * 60 * 1000, actor: 'system', role: 'Automated Job', action: 'INVOICE_SETTLED', resource: 'INV-2023-884', detail: 'ACH payment processed via Plaid rail', ip: '127.0.0.1', session: 'cron_daily', result: 'success', severity: 'info' },
+  { id: 'L-2838', ts: Date.now() - 2.4 * 60 * 60 * 1000, actor: 'elena.russo@vendorbridge.com', role: 'Department Head', action: 'PO_REVIEWED', resource: 'PO-2023-4921', detail: 'Forwarded to Finance with remarks', ip: '10.42.18.45', session: 'sess_b3e9f1', result: 'success', severity: 'info' },
+  { id: 'L-2837', ts: Date.now() - 5.1 * 60 * 60 * 1000, actor: 'system', role: 'Integrity Check', action: 'DB_BACKUP', resource: 'cluster-prod-01', detail: 'Snapshot 4.2 GB • 0 anomalies', ip: '127.0.0.1', session: 'cron_backup', result: 'success', severity: 'info' },
+  { id: 'L-2836', ts: Date.now() - 8.3 * 60 * 60 * 1000, actor: 'unknown', role: '—', action: 'LOGIN_FAILED', resource: '/auth/login', detail: '3 attempts blocked by rate limiter', ip: '203.0.113.42', session: 'sess_anon', result: 'blocked', severity: 'warn' },
+  { id: 'L-2835', ts: Date.now() - 9.7 * 60 * 60 * 1000, actor: 'sarah.jenkins@vendorbridge.com', role: 'Finance Director', action: 'INVOICE_OVERRIDE', resource: 'INV-2023-872', detail: 'Manual approval with override justification', ip: '10.42.18.7', session: 'sess_a8f1c2', result: 'success', severity: 'warn' },
+  { id: 'L-2834', ts: Date.now() - 11.5 * 60 * 60 * 1000, actor: 'm.lopez@vendorbridge.com', role: 'Vendor Manager', action: 'VENDOR_SUSPENDED', resource: 'VEN-3308', detail: 'Compliance hold — pending ISO audit', ip: '10.42.18.31', session: 'sess_c7a2d8', result: 'success', severity: 'warn' },
+  { id: 'L-2833', ts: Date.now() - 22.1 * 60 * 60 * 1000, actor: 'system', role: 'Automated Job', action: 'EMAIL_BOUNCED', resource: 'INV-2023-870', detail: 'Recipient mail server returned 5.1.1', ip: '127.0.0.1', session: 'cron_retry', result: 'failure', severity: 'error' },
+  { id: 'L-2832', ts: Date.now() - 28.4 * 60 * 60 * 1000, actor: 'j.smith@vendorbridge.com', role: 'Procurement Officer', action: 'EXPORT_PDF', resource: 'PO-2023-8472.pdf', detail: 'User-initiated PDF generation', ip: '10.42.18.12', session: 'sess_2d9e4a', result: 'success', severity: 'info' },
+];
+
 const TABS = [
   { id: 'all', label: 'All Events' },
   { id: 'approval', label: 'Approval Required' },

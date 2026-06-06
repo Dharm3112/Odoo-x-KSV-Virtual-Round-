@@ -29,13 +29,13 @@ export const ROLES = {
     home: '/rfqs',
     permissions: ['dashboard:read', 'vendors:read', 'rfqs:*', 'quotations:read', 'approvals:read', 'purchase-orders:*', 'activity:read'],
   },
-  viewer: {
-    id: 'viewer',
-    name: 'Auditor / Viewer',
-    description: 'Read-only access to dashboards, reports, and activity logs.',
-    accent: 'bg-surface-container-high text-on-surface',
-    home: '/reports',
-    permissions: ['dashboard:read', 'vendors:read', 'rfqs:read', 'quotations:read', 'purchase-orders:read', 'reports:read', 'activity:read'],
+  vendor: {
+    id: 'vendor',
+    name: 'Vendor',
+    description: 'Responds to RFQs, tracks RFQ status, views awarded POs.',
+    accent: 'bg-primary-container text-on-primary-container',
+    home: '/vendor-quotation',
+    permissions: ['vendor-quotation:*', 'quotations:read', 'purchase-orders:read', 'activity:read'],
   },
 };
 
@@ -47,7 +47,7 @@ const inferRoleFromEmail = (email) => {
   const lower = (email || '').toLowerCase();
   if (lower.startsWith('admin')) return 'admin';
   if (lower.startsWith('manager') || lower.startsWith('head')) return 'manager';
-  if (lower.startsWith('viewer') || lower.startsWith('audit')) return 'viewer';
+  if (lower.startsWith('vendor')) return 'vendor';
   return 'officer';
 };
 
