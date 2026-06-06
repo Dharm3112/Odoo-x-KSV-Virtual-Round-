@@ -4,6 +4,9 @@
   "description": "Backend ERP Engine for VendorBridge - Procurement & Vendor Management",
   "private": true,
   "license": "UNLICENSED",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -40,6 +43,7 @@
     "@nestjs/schedule": "^4.0.0",
     "@nestjs/swagger": "^7.2.0",
     "@nestjs/terminus": "^10.2.0",
+    "@nestjs/throttler": "^5.2.0",
     "@prisma/client": "^5.9.0",
     "argon2": "^0.31.2",
     "bullmq": "^5.1.0",

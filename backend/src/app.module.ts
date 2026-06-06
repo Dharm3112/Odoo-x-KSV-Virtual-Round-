@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 // Infrastructure Modules
 import { PrismaModule } from '@infra/database/prisma.module';
@@ -13,10 +15,12 @@ import { PdfModule } from '@infra/pdf/pdf.module';
 import { QueueModule } from '@infra/queue/queue.module';
 import { AntivirusModule } from '@infra/antivirus/antivirus.module';
 import { HealthModule } from '@infra/health/health.module';
+import { ThrottlerInfraModule } from '@infra/throttler/throttler.module';
+import { ThrottlerRedisStorage } from '@infra/throttler/throttler-redis.storage';
 import { validateEnvironment } from './config/environment';
 
-// Domain Modules (will be registered as development progresses)
-// import { AuthModule } from '@modules/auth/auth.module';
+// Domain Modules
+import { AuthModule } from '@modules/auth/auth.module';
 // import { DashboardModule } from '@modules/dashboard/dashboard.module';
 // import { VendorsModule } from '@modules/vendors/vendors.module';
 // import { RfqsModule } from '@modules/rfqs/rfqs.module';
@@ -55,6 +59,23 @@ import { validateEnvironment } from './config/environment';
       }),
     }),
 
+    // ====== Throttler (Redis-backed) ======
+    ThrottlerInfraModule,
+    ThrottlerModule.forRootAsync({
+      inject: [ThrottlerRedisStorage],
+      useFactory: (storage: ThrottlerRedisStorage) => ({
+        storage,
+        throttlers: [
+          // Default 100 req/min per IP across the API. Routes that need a
+          // tighter/different cap (login, password recovery) override with
+          // the @Throttle decorator referencing the matching throttler name.
+          { name: 'default', limit: 100, ttl: 60_000 },
+          { name: 'login', limit: 10, ttl: 60_000 },
+          { name: 'recovery', limit: 3, ttl: 3_600_000 },
+        ],
+      }),
+    }),
+
     // ====== Infrastructure Modules ======
     PrismaModule,
     LoggerModule,
@@ -65,8 +86,8 @@ import { validateEnvironment } from './config/environment';
     AntivirusModule,
     HealthModule,
 
-    // ====== Domain Modules (uncomment as they are built) ======
-    // AuthModule,
+    // ====== Domain Modules ======
+    AuthModule,
     // DashboardModule,
     // VendorsModule,
     // RfqsModule,
@@ -76,6 +97,12 @@ import { validateEnvironment } from './config/environment';
     // InvoicesModule,
     // ActivityLogsModule,
     // ReportsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
