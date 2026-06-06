@@ -516,3 +516,85 @@ export const exportPOPDF = ({ po, vendor, shipTo, lineItems, totals, filename = 
     pdf.save(filename);
   });
 };
+
+export const exportInvoicePDF = ({ invoice, billFrom, billTo, lineItems, totals, filename = 'invoice.pdf' } = {}) => {
+  const stamp = new Date().toLocaleString();
+  const subtotal = totals?.subtotal || 0;
+  const shipping = totals?.shipping || 0;
+  const tax = totals?.tax || 0;
+  const totalDue = subtotal + shipping + tax;
+  const taxRate = totals?.taxRate ? `${(totals.taxRate * 100).toFixed(1)}%` : '—';
+
+  const sections = [
+    `<div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-bottom: 32px;">
+      <div style="background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px; padding: 22px 22px 20px 22px;">
+        <div style="font-family: ${FONT.mono}; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted}; margin-bottom: 10px;">Invoice Number</div>
+        <div style="font-family: ${FONT.mono}; font-size: 14px; color: ${COLOR.ink};">${invoice?.number || '—'}</div>
+      </div>
+      <div style="background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px; padding: 22px 22px 20px 22px;">
+        <div style="font-family: ${FONT.mono}; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted}; margin-bottom: 10px;">Issue Date</div>
+        <div style="font-family: ${FONT.mono}; font-size: 14px; color: ${COLOR.ink};">${invoice?.issueDate || '—'}</div>
+      </div>
+      <div style="background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px; padding: 22px 22px 20px 22px;">
+        <div style="font-family: ${FONT.mono}; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted}; margin-bottom: 10px;">Due Date</div>
+        <div style="font-family: ${FONT.mono}; font-size: 14px; color: ${COLOR.ink};">${invoice?.dueDate || '—'}</div>
+      </div>
+      <div style="background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px; padding: 22px 22px 20px 22px;">
+        <div style="font-family: ${FONT.mono}; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted}; margin-bottom: 10px;">Status</div>
+        <div>${statusPill(invoice?.status || 'PENDING', invoice?.statusKind || 'pending')}</div>
+      </div>
+    </div>`,
+    `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 8px;">
+      <div style="background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px; padding: 26px;">
+        <div style="font-family: ${FONT.mono}; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted}; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid ${COLOR.border};">Billed By</div>
+        <div style="font-size: 16px; font-weight: 500; color: ${COLOR.ink}; margin-bottom: 8px;">${billFrom?.name || '—'}</div>
+        <div style="color: ${COLOR.muted}; font-size: 13px; line-height: 1.6;">${billFrom?.address || ''}</div>
+        <div style="font-family: ${FONT.mono}; font-size: 11px; color: ${COLOR.muted}; margin-top: 12px;">${billFrom?.taxId || ''}</div>
+      </div>
+      <div style="background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px; padding: 26px;">
+        <div style="font-family: ${FONT.mono}; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted}; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid ${COLOR.border};">Billed To</div>
+        <div style="font-size: 16px; font-weight: 500; color: ${COLOR.ink}; margin-bottom: 8px;">${billTo?.name || '—'}</div>
+        <div style="color: ${COLOR.muted}; font-size: 13px; line-height: 1.6;">${billTo?.address || ''}</div>
+        <div style="font-family: ${FONT.mono}; font-size: 11px; color: ${COLOR.muted}; margin-top: 12px;">${billTo?.attn || ''}</div>
+      </div>
+    </div>`,
+    sectionHeader('Items', 'Invoiced items'),
+    dataTable(
+      [
+        { key: 'item', label: 'Description', format: (r) => `<div style="font-weight:500;">${r.item}</div><div style="font-family: ${FONT.mono}; font-size: 10px; color: ${COLOR.muted}; margin-top: 2px;">${r.sku || ''}</div>` },
+        { key: 'qty', label: 'Qty', align: 'right' },
+        { key: 'unit', label: 'Unit Price', align: 'right' },
+        { key: 'tax', label: 'Tax', align: 'right' },
+        { key: 'amount', label: 'Amount', align: 'right' },
+      ],
+      lineItems || []
+    ),
+    `<div style="display:flex; justify-content:flex-end; margin-top: 28px;">
+      <div style="width: 360px; background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px; padding: 22px;">
+        <div style="display:flex; justify-content:space-between; padding: 8px 0; font-size: 13px; color: ${COLOR.muted};"><span>Subtotal</span><span style="font-family: ${FONT.mono}; color: ${COLOR.ink};">${totals?.subtotal}</span></div>
+        <div style="display:flex; justify-content:space-between; padding: 8px 0; font-size: 13px; color: ${COLOR.muted};"><span>Shipping</span><span style="font-family: ${FONT.mono}; color: ${COLOR.ink};">${totals?.shipping}</span></div>
+        <div style="display:flex; justify-content:space-between; padding: 8px 0; font-size: 13px; color: ${COLOR.muted};"><span>Tax (${taxRate})</span><span style="font-family: ${FONT.mono}; color: ${COLOR.ink};">${totals?.tax}</span></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 16px 0 0 0; margin-top: 10px; border-top: 1px solid ${COLOR.border};">
+          <span style="font-family: ${FONT.mono}; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted};">Total Due</span>
+          <span style="font-family: ${FONT.display}; font-size: 24px; color: ${COLOR.ink};">${totalDue}</span>
+        </div>
+      </div>
+    </div>`,
+    `<div style="margin-top: 36px; padding: 22px; background: ${COLOR.surfaceLowest}; border: 1px solid ${COLOR.borderSoft}; border-radius: 12px;">
+      <div style="font-family: ${FONT.mono}; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: ${COLOR.muted}; margin-bottom: 10px;">Payment Instructions</div>
+      <div style="font-size: 12px; color: ${COLOR.muted}; line-height: 1.7;">${invoice?.paymentInstructions || 'Remit payment via bank transfer to the account details on file. Reference the invoice number with your payment. Late payments are subject to a 1.5% monthly service charge.'}</div>
+    </div>`,
+  ];
+
+  const html = buildReportShell({ title: `Invoice ${invoice?.number || ''}`, subtitle: `Invoice for PO ${invoice?.poNumber || ''}`, stamp, sections });
+  const root = document.createElement('div');
+  root.innerHTML = html;
+  return renderRichToCanvas(root).then((canvas) => {
+    const pdf = new jsPDF({ unit: 'px', format: 'a4', orientation: 'portrait' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    addCanvasToPdf(canvas, pdf, pageW, pageH);
+    stampPageFooters(pdf, stamp);
+    pdf.save(filename);
+  });
+};
