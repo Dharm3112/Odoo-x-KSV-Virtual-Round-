@@ -35,6 +35,7 @@ const Layout = () => {
     { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
     { name: 'Vendors', path: '/vendors', icon: 'store' },
     { name: 'RFQs', path: '/rfqs', icon: 'request_quote' },
+    { name: 'Vendor Quotation', path: '/vendor-quotation', icon: 'rate_review' },
     { name: 'Quotations', path: '/quotations', icon: 'description' },
     { name: 'Approvals', path: '/approvals', icon: 'fact_check' },
     { name: 'Purchase Orders', path: '/purchase-orders', icon: 'shopping_cart' },

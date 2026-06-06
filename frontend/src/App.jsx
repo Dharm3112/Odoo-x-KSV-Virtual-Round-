@@ -6,6 +6,7 @@ import Signup from './pages/Signup';
 import Vendors from './pages/Vendors';
 import Rfqs from './pages/Rfqs';
 import Quotations from './pages/Quotations';
+import VendorQuotation from './pages/VendorQuotation';
 import Approvals from './pages/Approvals';
 import PurchaseOrders from './pages/PurchaseOrders';
 import Reports from './pages/Reports';
@@ -48,6 +49,7 @@ const AppRoutes = () => (
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="vendors" element={<Vendors />} />
       <Route path="rfqs" element={<Rfqs />} />
+      <Route path="vendor-quotation" element={<VendorQuotation />} />
       <Route path="quotations" element={<Quotations />} />
       <Route path="approvals" element={<Approvals />} />
       <Route path="purchase-orders" element={<PurchaseOrders />} />

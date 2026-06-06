@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '../hooks/useToasts.jsx';
 import { useFormatCurrency } from '../utils/format';
 
@@ -59,16 +59,25 @@ const Quotations = () => {
   const onAward = () => setConfirm(true);
   const commitAward = () => {
     setConfirm(false);
-    toast.success(`Contract awarded to ${selected.vendor}. PO draft created.`);
+    toast.success(`Contract awarded to ${QUOTES.find((q) => q.id === selected)?.vendor}. PO draft created.`);
     setTimeout(() => navigate('/purchase-orders'), 900);
   };
 
   return (
     <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-32">
-      <div className="px-8 md:px-asymmetric-offset pt-12 pb-8">
-        <p className="font-mono-data text-mono-data text-on-surface-variant uppercase tracking-widest mb-4">RFQ-2024-892 • High-Tensile Steel Cabling</p>
-        <h2 className="font-display-lg text-display-lg text-on-surface mb-6">Quotation Comparison</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">Review submitted vendor bids for precision and value alignment. The matrix highlights the optimal choice based on your weighted criteria scoring.</p>
+      <div className="px-8 md:px-asymmetric-offset pt-12 pb-8 flex items-start justify-between gap-6">
+        <div>
+          <p className="font-mono-data text-mono-data text-on-surface-variant uppercase tracking-widest mb-4">RFQ-2024-892 • High-Tensile Steel Cabling</p>
+          <h2 className="font-display-lg text-display-lg text-on-surface mb-6">Quotation Comparison</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">Review submitted vendor bids for precision and value alignment. The matrix highlights the optimal choice based on your weighted criteria scoring.</p>
+        </div>
+        <Link
+          to="/vendor-quotation"
+          className="shrink-0 px-6 py-4 bg-primary-container text-on-primary-container font-label-caps text-label-caps uppercase tracking-widest rounded-full shadow-[0_10px_30px_-10px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform duration-300 flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>rate_review</span>
+          Submit a Quotation
+        </Link>
       </div>
 
       <div className="relative w-full px-8 md:px-12 overflow-x-auto overflow-y-visible no-scrollbar pb-16 snap-x snap-mandatory">
@@ -152,11 +161,10 @@ const Quotations = () => {
           className="bg-primary-container text-on-primary-container font-label-caps text-label-caps px-10 py-4 rounded-full shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform duration-300 flex items-center gap-3 border border-outline/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>task_alt</span>
-          {selected ? `Award Contract${selected ? ` — ${QUOTES.find((q) => q.id === selected)?.vendor}` : ''}` : 'Award Contract'}
+          {selected ? `Award Contract — ${QUOTES.find((q) => q.id === selected)?.vendor}` : 'Award Contract'}
         </button>
       </div>
 
-      {/* Award confirmation modal */}
       {confirm && selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/10 backdrop-blur-[2px]" onClick={() => setConfirm(false)}>
           <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Award contract" className="bg-surface-container-lowest rounded-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.2)] border border-outline-variant/20 w-full max-w-md p-8">
@@ -187,57 +195,78 @@ const Quotations = () => {
         </div>
       )}
 
-      {/* Review modal */}
       {reviewQuote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/10 backdrop-blur-[2px]" onClick={() => setReviewQuote(null)}>
-          <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Review quotation" className="bg-surface-container-lowest rounded-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.2)] border border-outline-variant/20 w-full max-w-lg p-8">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <p className="font-mono-data text-mono-data text-on-surface-variant uppercase tracking-widest mb-1">RFQ-2024-892</p>
-                <h3 className="font-headline-sm text-headline-sm text-primary">{reviewQuote.vendor}</h3>
-                <p className="font-mono-data text-mono-data text-on-surface-variant mt-1">{reviewQuote.location}</p>
-              </div>
-              <button onClick={() => setReviewQuote(null)} className="p-2 -mr-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-bright" aria-label="Close review">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 p-6 bg-surface-bright rounded-lg">
-              <div>
-                <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Landed cost</dt>
-                <dd className="font-data-lg text-data-lg text-primary">{fmt(reviewQuote.total)}</dd>
-              </div>
-              <div>
-                <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Lead time</dt>
-                <dd className="font-data-lg text-data-lg text-primary">{reviewQuote.lead}</dd>
-              </div>
-              <div>
-                <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Vendor rating</dt>
-                <dd className="font-data-lg text-data-lg text-primary">{reviewQuote.rating.toFixed(1)} / 5</dd>
-              </div>
-              <div>
-                <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Payment terms</dt>
-                <dd className="font-data-lg text-data-lg text-primary">{reviewQuote.terms}</dd>
-              </div>
-            </dl>
-
-            <div className="mt-6">
-              <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">Material spec.</p>
-              <p className="font-body-md text-body-md text-on-surface">{reviewQuote.material}</p>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-8">
-              <button onClick={() => setReviewQuote(null)} className="px-5 py-2.5 rounded-full font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-bright transition-colors">Close</button>
-              <button
-                onClick={() => { setReviewQuote(null); setSelected(reviewQuote.id); toast.info(`${reviewQuote.vendor} selected.`); }}
-                className="px-5 py-2.5 rounded-full bg-primary text-on-primary font-label-caps text-label-caps hover:bg-tertiary transition-colors"
-              >
-                Select for award
-              </button>
-            </div>
-          </div>
-        </div>
+        <ReviewQuoteModal
+          quote={reviewQuote}
+          onClose={() => setReviewQuote(null)}
+          onSelectForAward={() => { setReviewQuote(null); setSelected(reviewQuote.id); toast.info(`${reviewQuote.vendor} selected.`); }}
+          fmt={fmt}
+        />
       )}
+    </div>
+  );
+};
+
+const ReviewQuoteModal = ({ quote, onClose, onSelectForAward, fmt }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/10 backdrop-blur-[2px]" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Review quotation" className="bg-surface-container-lowest rounded-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.2)] border border-outline-variant/20 w-full max-w-lg p-8">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <p className="font-mono-data text-mono-data text-on-surface-variant uppercase tracking-widest mb-1">RFQ-2024-892</p>
+            <h3 className="font-headline-sm text-headline-sm text-primary">{quote.vendor}</h3>
+            <p className="font-mono-data text-mono-data text-on-surface-variant mt-1">{quote.location}</p>
+          </div>
+          <button onClick={onClose} className="p-2 -mr-2 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-bright" aria-label="Close review">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 p-6 bg-surface-bright rounded-lg">
+          <div>
+            <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Landed cost</dt>
+            <dd className="font-data-lg text-data-lg text-primary">{fmt(quote.total)}</dd>
+          </div>
+          <div>
+            <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Lead time</dt>
+            <dd className="font-data-lg text-data-lg text-primary">{quote.lead}</dd>
+          </div>
+          <div>
+            <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Vendor rating</dt>
+            <dd className="font-data-lg text-data-lg text-primary">{quote.rating.toFixed(1)} / 5</dd>
+          </div>
+          <div>
+            <dt className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Payment terms</dt>
+            <dd className="font-data-lg text-data-lg text-primary">{quote.terms}</dd>
+          </div>
+        </dl>
+
+        <div className="mt-6">
+          <p className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">Material spec.</p>
+          <p className="font-body-md text-body-md text-on-surface">{quote.material}</p>
+        </div>
+
+        <div className="mt-6 p-4 bg-primary-container/10 rounded-lg border border-primary-container/20">
+          <p className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-2">Want to respond to this RFQ as a vendor?</p>
+          <Link
+            to="/vendor-quotation"
+            className="inline-flex items-center gap-2 font-label-caps text-label-caps text-primary hover:text-tertiary transition-colors"
+          >
+            Open the Vendor Quotation submission page
+            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+          </Link>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-8">
+          <button onClick={onClose} className="px-5 py-2.5 rounded-full font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-bright transition-colors">Close</button>
+          <button
+            onClick={onSelectForAward}
+            className="px-5 py-2.5 rounded-full bg-primary text-on-primary font-label-caps text-label-caps hover:bg-tertiary transition-colors"
+          >
+            Select for award
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
