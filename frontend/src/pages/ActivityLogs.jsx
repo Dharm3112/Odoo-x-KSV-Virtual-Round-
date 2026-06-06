@@ -2,7 +2,7 @@ import React from 'react';
 
 const ActivityLogs = () => {
   return (
-    <div className="flex-1 pl-6 pr-6 md:pl-asymmetric-offset md:pr-16 max-w-[1440px] pt-12 md:pt-24 pb-32">
+    <div className="container-page">
       <div className="mb-16">
         <h2 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-4 tracking-tight">System Activity</h2>
         <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">A comprehensive, real-time audit log of all logistical events, approvals, and system changes across VendorBridge Master.</p>
@@ -10,7 +10,7 @@ const ActivityLogs = () => {
 
       <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mb-16 border-b border-outline-variant pb-1">
         <button className="font-data-lg text-data-lg text-primary border-b-[1.5px] border-primary pb-3 px-1 -mb-[1.5px]">All Events</button>
-        <button className="font-data-lg text-data-lg text-on-surface-variant hover:text-primary transition-colors pb-3 px-1">Approval Required <span className="ml-2 bg-error-container text-on-error-container text-[11px] px-2 py-0.5 rounded-full relative -top-0.5">3</span></button>
+        <button className="font-data-lg text-data-lg text-on-surface-variant hover:text-primary transition-colors pb-3 px-1">Approval Required <span className="ml-2 bg-error-container text-on-error-container text-[11px] px-2 py-0.5 rounded-full relative -top-2">3</span></button>
         <button className="font-data-lg text-data-lg text-on-surface-variant hover:text-primary transition-colors pb-3 px-1">RFQ Updates</button>
         <button className="font-data-lg text-data-lg text-on-surface-variant hover:text-primary transition-colors pb-3 px-1">Invoice Processed</button>
         <button className="font-data-lg text-data-lg text-on-surface-variant hover:text-primary transition-colors pb-3 px-1">System Audit</button>
@@ -37,7 +37,7 @@ const ActivityLogs = () => {
             <div className="font-mono-data text-mono-data text-primary">10:42 AM</div>
             <div className="font-mono-data text-[11px] text-on-surface-variant mt-1">Today</div>
           </div>
-          <div className="hidden md:block absolute left-[96.5px] top-[10px] w-2 h-2 rounded-full bg-error ring-4 ring-background z-10 transition-transform group-hover:scale-125"></div>
+          <div className="hidden md:block absolute left-[96px] top-[10px] w-2 h-2 rounded-full bg-error ring-4 ring-background z-10 transition-transform group-hover:scale-125"></div>
           
           <div className="flex-1 bg-surface-container-lowest p-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.03)] rounded-sm border border-transparent hover:border-outline-variant/30 transition-all duration-300">
             <div className="flex justify-between items-start mb-4">
@@ -60,7 +60,7 @@ const ActivityLogs = () => {
             <div className="font-mono-data text-mono-data text-on-surface-variant">08:15 AM</div>
             <div className="font-mono-data text-[11px] text-on-surface-variant mt-1">Today</div>
           </div>
-          <div className="hidden md:block absolute left-[96.5px] top-[10px] w-2 h-2 rounded-full bg-surface-tint ring-4 ring-background z-10 transition-transform group-hover:scale-125"></div>
+          <div className="hidden md:block absolute left-[96px] top-[10px] w-2 h-2 rounded-full bg-surface-tint ring-4 ring-background z-10 transition-transform group-hover:scale-125"></div>
           
           <div className="flex-1 bg-surface-bright p-8 border border-outline-variant/20 rounded-sm">
             <div className="flex justify-between items-start mb-4">
@@ -80,7 +80,7 @@ const ActivityLogs = () => {
             <div className="font-mono-data text-mono-data text-on-surface-variant">14:30 PM</div>
             <div className="font-mono-data text-[11px] text-on-surface-variant mt-1">Yesterday</div>
           </div>
-          <div className="hidden md:block absolute left-[96.5px] top-[10px] w-2 h-2 rounded-full border-2 border-outline-variant bg-background ring-4 ring-background z-10 transition-transform group-hover:scale-125"></div>
+          <div className="hidden md:block absolute left-[96px] top-[10px] w-2 h-2 rounded-full border-2 border-outline-variant bg-background ring-4 ring-background z-10 transition-transform group-hover:scale-125"></div>
           
           <div className="flex-1 bg-surface-bright p-8 border border-outline-variant/20 rounded-sm">
             <div className="flex justify-between items-start mb-4">
@@ -96,7 +96,7 @@ const ActivityLogs = () => {
             <div className="font-mono-data text-mono-data text-on-surface-variant">02:00 AM</div>
             <div className="font-mono-data text-[11px] text-on-surface-variant mt-1">Yesterday</div>
           </div>
-          <div className="hidden md:block absolute left-[96.5px] top-[10px] w-2 h-2 rounded-full bg-outline-variant ring-4 ring-background z-10 opacity-50"></div>
+          <div className="hidden md:block absolute left-[96px] top-[10px] w-2 h-2 rounded-full bg-outline-variant ring-4 ring-background z-10 opacity-50"></div>
           
           <div className="flex-1 py-4 flex items-start gap-4 opacity-70">
             <span className="material-symbols-outlined text-outline-variant">memory</span>

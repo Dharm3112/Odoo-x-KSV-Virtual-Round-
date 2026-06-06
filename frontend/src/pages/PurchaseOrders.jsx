@@ -3,7 +3,7 @@ import React from 'react';
 const PurchaseOrders = () => {
   return (
     <div className="flex-1 min-h-screen bg-background relative overflow-x-hidden">
-      <div className="p-6 md:py-24 md:pl-[120px] md:pr-16 max-w-[1200px] mx-auto">
+      <div className="container-page max-w-[1200px] py-12">
         <div className="bg-surface-container-lowest w-full rounded shadow-[0_10px_40px_-10px_rgba(0,0,0,0.03)] p-8 md:p-16 relative">
           
           <div className="absolute top-8 right-8 md:top-12 md:right-12 flex gap-2 glass-panel px-2 py-1 rounded z-10 border border-outline-variant/20">

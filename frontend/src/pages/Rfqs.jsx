@@ -2,8 +2,8 @@ import React from 'react';
 
 const Rfqs = () => {
   return (
-    <div className="flex-1 p-16 overflow-y-auto bg-surface-bright pb-32">
-      <div className="max-w-[1100px] mx-auto lg:ml-asymmetric-offset transition-all duration-500 ease-in-out opacity-100 transform translate-y-0">
+    <div className="flex-1 overflow-y-auto bg-surface-bright">
+      <div className="container-page max-w-[1100px] transition-all duration-500 ease-in-out opacity-100 transform translate-y-0">
         <div className="mb-20 flex flex-col gap-10">
           <h2 className="font-display-lg text-display-lg text-on-surface tracking-tight">Initiate Quotation Request</h2>
           

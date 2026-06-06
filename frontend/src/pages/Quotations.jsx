@@ -9,7 +9,8 @@ const Quotations = () => {
         <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">Review submitted vendor bids for precision and value alignment. The matrix highlights the optimal choice based on your weighted criteria scoring.</p>
       </div>
 
-      <div className="relative w-full px-8 md:px-12 flex overflow-x-auto no-scrollbar pb-16 snap-x snap-mandatory items-start">
+      <div className="relative w-full px-8 md:px-12 overflow-x-auto overflow-y-visible no-scrollbar pb-16 snap-x snap-mandatory">
+        <div className="flex items-start min-w-max">
         <div className="w-[200px] flex-shrink-0 sticky left-0 z-20 bg-surface/90 backdrop-blur-sm py-6 pr-8 flex flex-col shadow-[10px_0_20px_-10px_rgba(0,0,0,0.02)] snap-start">
           <div className="h-[120px] mb-8"></div>
           <div className="h-20 flex items-center border-b border-outline-variant/30">
@@ -124,10 +125,11 @@ const Quotations = () => {
             </div>
           </div>
         </div>
+        </div>
       </div>
 
-      <div className="fixed bottom-12 left-1/2 md:left-[calc(50%+130px)] -translate-x-1/2 z-50">
-        <button className="bg-primary-container text-on-primary-container font-label-caps text-label-caps px-10 py-4 rounded-full shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] hover:scale-105 transition-transform duration-300 flex items-center gap-3 border border-outline/20 backdrop-blur-md">
+      <div className="sticky bottom-0 left-0 right-0 z-30 mt-12 -mx-8 px-8 py-6 bg-surface/80 backdrop-blur-md border-t border-outline-variant/20 flex justify-end">
+        <button className="bg-primary-container text-on-primary-container font-label-caps text-label-caps px-10 py-4 rounded-full shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:scale-105 transition-transform duration-300 flex items-center gap-3 border border-outline/20">
           <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>task_alt</span>
           Award Contract
         </button>

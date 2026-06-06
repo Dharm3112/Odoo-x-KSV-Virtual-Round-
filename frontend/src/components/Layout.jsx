@@ -66,14 +66,14 @@ const Layout = () => {
         </nav>
 
         <div className="mt-auto flex flex-col gap-1 pt-8 border-t border-on-secondary/10 mx-6">
-          <a className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px]" href="#">
+          <button className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px]" type="button">
             <span className="material-symbols-outlined font-light">settings</span>
             Settings
-          </a>
-          <a className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px]" href="#">
+          </button>
+          <button className="flex items-center gap-4 text-on-secondary/60 dark:text-on-secondary-fixed-variant pl-[18px] py-2 hover:bg-surface-container-high/10 transition-colors duration-200 -ml-[18px]" type="button">
             <span className="material-symbols-outlined font-light">help</span>
             Support
-          </a>
+          </button>
         </div>
       </aside>
 

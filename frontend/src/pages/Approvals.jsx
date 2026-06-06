@@ -1,12 +1,15 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Approvals = () => {
   return (
-    <div className="flex-1 px-6 md:px-12 lg:px-24 py-12 pb-32">
+    <div className="container-page">
       <div className="mb-12 max-w-4xl">
         <div className="flex items-center gap-3 mb-4">
-          <span className="material-symbols-outlined text-primary text-[20px] cursor-pointer hover:opacity-70 transition-opacity">arrow_back</span>
-          <span className="font-label-caps text-label-caps text-on-surface-variant tracking-widest uppercase">Pending Approval</span>
+          <Link to="/dashboard" className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors" aria-label="Back to dashboard">
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            <span className="font-label-caps text-label-caps tracking-widest uppercase">Pending Approval</span>
+          </Link>
         </div>
         <h2 className="font-display-lg text-display-lg text-primary font-normal mb-2 tracking-tight">PO-2023-4921</h2>
         <p className="font-mono-data text-mono-data text-on-surface-variant">Submitted on Oct 24, 2023 by J. Smith (Procurement)</p>

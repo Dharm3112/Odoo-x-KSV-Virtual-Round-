@@ -1,6 +1,23 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "liga";
+}
+
 @layer utilities {
   .glass-panel {
     background: rgba(255, 255, 255, 0.7);
@@ -40,6 +57,13 @@
       padding: 4rem 3rem 8rem 7.5rem;
     }
   }
+  .stagger-1 { animation: fadeInUp 0.6s ease-out 0.1s forwards; opacity: 0; }
+  .stagger-2 { animation: fadeInUp 0.6s ease-out 0.2s forwards; opacity: 0; }
+  .stagger-3 { animation: fadeInUp 0.6s ease-out 0.3s forwards; opacity: 0; }
+  .stagger-4 { animation: fadeInUp 0.6s ease-out 0.4s forwards; opacity: 0; }
+  .stagger-5 { animation: fadeInUp 0.6s ease-out 0.5s forwards; opacity: 0; }
+  .stagger-6 { animation: fadeInUp 0.6s ease-out 0.6s forwards; opacity: 0; }
+  .stagger-7 { animation: fadeInUp 0.6s ease-out 0.7s forwards; opacity: 0; }
 }
 
 @layer components {
