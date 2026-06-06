@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer utilities {
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+  }
+  .soft-shadow {
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.03);
+  }
+  .luxury-shadow {
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.03);
+  }
+  .input-minimal {
+    @apply bg-transparent border-0 border-b border-[#dadada] focus:border-[#EAE6DF] focus:ring-0 focus:outline-none pb-2 px-0 transition-all duration-300;
+  }
+  .shadow-editorial {
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.03);
+  }
+  .shadow-drawer {
+    box-shadow: -20px 0 60px -10px rgba(0,0,0,0.05);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .container-page {
+    padding: 3rem 1.5rem 8rem;
+    max-width: 1600px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (min-width: 768px) {
+    .container-page {
+      padding: 4rem 3rem 8rem 7.5rem;
+    }
+  }
+}
+
+@layer components {
+  /* Subtle chart animation */
+  @keyframes drawLine {
+    from { stroke-dashoffset: 1000; }
+    to { stroke-dashoffset: 0; }
+  }
+  .chart-path {
+    stroke-dasharray: 1000;
+    animation: drawLine 2s ease-out forwards;
+    animation-delay: 0.8s; /* Wait for reveal */
+  }
+
+  /* Staggered Reveal Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+}
