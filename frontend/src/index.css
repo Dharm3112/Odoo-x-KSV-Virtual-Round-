@@ -30,7 +30,7 @@
     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.03);
   }
   .input-minimal {
-    @apply bg-transparent border-0 border-b border-[#dadada] focus:border-[#EAE6DF] focus:ring-0 focus:outline-none pb-2 px-0 transition-all duration-300;
+    @apply bg-transparent border-0 border-b border-[#dadada] focus:border-[#EAE6DF] focus:ring-0 focus:outline-none pb-2 pr-0 transition-all duration-300;
   }
   .shadow-editorial {
     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.03);
